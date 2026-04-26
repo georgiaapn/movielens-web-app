@@ -1,0 +1,7 @@
+fastapi      # Το framework για την κατασκευή των RESTful APIs
+uvicorn      # Ο server που θα τρέχει το FastAPI backend
+sqlalchemy   # Για τη σύνδεση και τη διαχείριση της SQLite βάσης
+pandas       # Για το εύκολο διάβασμα των CSV και την αρχικοποίηση της βάσης
+pydantic     # Για τον ορισμό των μοντέλων δεδομένων (Request/Response)
+
+# pip install -r requirements.txt
