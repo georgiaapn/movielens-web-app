@@ -11,18 +11,20 @@
   <!-- ═══════════════════════════════════════════════════════════
        HEADER
   ═══════════════════════════════════════════════════════════ -->
-  <header class="site-header">
-    <div class="header-left">
-      <span class="logo">🎬 MovieLens</span>
+<header class="site-header">
+  <div class="header-center">
+    <span class="logo">MovieLens</span>
+  </div>
+  
+  <div class="search-area">
+    <div class="search-wrapper">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search movies..." />
+      <button id="searchBtn" class="search-btn">Search</button>
     </div>
-    <div class="header-right">
-      <div class="search-wrapper">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search movies..." />
-        <button id="searchBtn" class="search-btn">Search</button>
-      </div>
-      <button id="openAddModal" class="btn-add">＋ Add Movie</button>
-    </div>
-  </header>
+  </div>
+
+  <button id="openAddModal" class="btn-add">＋ Add Movie</button>
+</header>
 
   <!-- ═══════════════════════════════════════════════════════════
        MAIN CONTENT
@@ -88,6 +90,9 @@
         <div id="detailsRatingsList" class="ratings-list"></div>
       </div>
     </div>
+  </div>
+
+  <div id="paginationContainer" class="pagination-controls">
   </div>
 
   <script src="index.js"></script>
