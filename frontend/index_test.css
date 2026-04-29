@@ -1,0 +1,319 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #30106b;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 30px 0;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 30px; /* Η απόσταση ανάμεσα στο hamburger icon και το λογότυπο */
+}
+
+.menu-btn {
+    /* Αφαιρέσαμε το position: absolute για να κάτσει αρμονικά δίπλα στο logo */
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-btn span {
+    width: 24px;
+    height: 3px;
+    background-color: #c6108f;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.logo {
+    font-family: "Covered By Your Grace", cursive;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 84px;
+    color: #c6108f;
+    text-align: center;
+    letter-spacing: 2px;
+    /* -4px αριστερά, 3px κάτω, 0px θολούρα, σκούρο μωβ χρώμα */
+    text-shadow: -16px 3px 4px #1a0f2e;
+}
+
+/* Search Container */
+.search-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    max-width: 400px;
+    width: 100%;
+    margin: 0; /* Αφαιρέσαμε τα τεράστια κάθετα margins που καθυστερούσαν το grid */
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 45px 12px 20px;
+    border: none;
+    border-radius: 25px;
+    background-color: #ece6f0;
+    color: #86818b;
+    font-size: 14px;
+    outline: none;
+}
+
+.search-input::placeholder {
+    color: #c6108f;
+}
+
+.search-btn {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #c6108f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Main Content */
+.main-content {
+    margin: 0px 0;
+}
+
+.section-title {
+    font-family: "Alumni Sans SC", sans-serif;
+    font-size: 32px;
+    font-weight: 400;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #c6108f;
+}
+
+/* Movies Grid: 4 Στήλες */
+.movies-grid {
+    display: grid;
+    /* Επιβάλλουμε ακριβώς 4 στήλες ίσου μεγέθους */
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+/* Προσαρμογή για μικρότερες οθόνες (Responsive) */
+@media (max-width: 1024px) {
+    .movies-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 στήλες σε tablets */
+    }
+}
+
+@media (max-width: 600px) {
+    .movies-grid {
+        grid-template-columns: 1fr; /* 1 στήλη σε κινητά */
+    }
+}
+
+/* Movie Card */
+.movie-card {
+    background-color: #30106b;
+    border: none; /* Αφαιρούμε το border για να δείχνει πιο καθαρό, όπως στο Figma */
+    border-radius: 20px; /* Κάνουμε τις γωνίες ελαφρώς πιο τετράγωνες */
+    overflow: hidden;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s ease;
+    
+    /* Η ΣΚΙΑ: -12px προς τα αριστερά, 8px προς τα κάτω, 4px θολούρα */
+    box-shadow: -12px 8px 10px rgba(10, 3, 25, 0.9);
+}
+
+.movie-card:hover {
+    /* Όταν πάει το ποντίκι από πάνω, η κάρτα κινείται ελαφρώς πάνω και δεξιά... */
+    transform: translate(4px, -4px);
+    /* ...και η σκιά "μακραίνει" δίνοντας μια ωραία 3D αίσθηση */
+    box-shadow: -16px 16px 10px rgba(10, 3, 25, 0.9);
+}
+
+.movie-name {
+    font-family: "Patrick Hand", cursive;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 400; /* Ή 700 αν τη θέλεις πιο έντονη */
+    margin-bottom: 12px;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+}
+.movie-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.stars {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.star {
+    color: #c6108f; /* Τα γεμάτα αστέρια είναι φουλ ροζ */
+    font-size: 22px; /* Τα έκανα λίγο πιο μεγάλα για να φαίνεται ωραία το περίγραμμα */
+    -webkit-text-stroke: 1px #c6108f; /* Βάζει το ροζ outline σε ΟΛΑ τα αστέρια */
+}
+
+.star.empty {
+    color: #d8d8d8; /* Το ανοιχτό γκρι γέμισμα που έχουν τα άδεια αστέρια στο Figma σου */
+    /* Το ροζ περίγραμμα το κρατάει αυτόματα από την κλάση .star */
+}
+
+.star.half {
+    /* Βάφει το μισό αριστερό ροζ και το μισό δεξί γκρι */
+    background: linear-gradient(to right, #c6108f 50%, #d8d8d8 50%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    /* Το outline παραμένει κανονικά επειδή κληρονομείται από την κλάση .star */
+}
+
+.rating-count {
+    font-family: "Alumni Sans SC", sans-serif;
+    font-size: 24px;
+    color: #cccccc;
+    margin-left: auto;
+}
+
+.rate-btn {
+    background-color: #c6108f;
+    color: #ffffff;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    align-self: flex-start;
+}
+
+.rate-btn:hover {
+    background-color: #ff0080;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 40px 0;
+    padding-bottom: 40px;
+}
+
+.pagination-btn {
+    background: none;
+    border: none;
+    color: #999999;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 8px 12px;
+    transition: color 0.2s ease;
+}
+
+.pagination-btn:hover {
+    color: #c6108f;
+}
+
+.pagination-number {
+    background: none;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+}
+
+.pagination-number:hover {
+    color: #c6108f;
+}
+
+.pagination-number.active {
+    color: #c6108f;
+    font-weight: 600;
+}
+
+.pagination-ellipsis {
+    color: #999999;
+    font-size: 14px;
+    padding: 8px 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .logo {
+        font-size: 36px;
+    }
+
+    .movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .section-title {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0 10px;
+    }
+
+    .logo {
+        font-size: 28px;
+    }
+
+    .movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+    }
+
+    .movie-card {
+        padding: 15px;
+    }
+
+    .section-title {
+        font-size: 18px;
+    }
+}

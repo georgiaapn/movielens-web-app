@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieLens</title>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Covered+By+Your+Grace&family=Patrick+Hand&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Alumni+Sans+SC:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index_test.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+<header class="header">
+            <div class="header-left">
+                <button class="menu-btn" id="menuBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <h1 class="logo">MovieLens</h1>
+            </div>
+
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Search movies ..." id="searchInput">
+                <button class="search-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- All Movies Section -->
+            <section class="movies-section">
+                <h2 class="section-title">All movies</h2>
+                
+                <!-- Movies Grid -->
+                <div class="movies-grid" id="moviesGrid">
+                    <!-- Movie cards will be inserted here by JavaScript -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination">
+            <!-- Pagination controls will be inserted here by JavaScript -->
+        </div>
+    </div>
+
+    <script src="index_test.js"></script>
+</body>
+</html>
