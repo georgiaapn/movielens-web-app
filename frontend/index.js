@@ -107,15 +107,15 @@ function renderMovies() {
         movieCard.onclick = () => showMovieDetails(movie.movieId);
         
         // Χρησιμοποιούμε την αρχική σου δομή HTML
-        movieCard.innerHTML = `
-            <div class="movie-name">${movie.title}</div>
-            <div class="movie-info">
-                <div class="stars" id="stars-${movie.movieId}">
-                    <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+            movieCard.innerHTML = `
+                <div class="movie-name">${movie.title}</div>
+                <div class="movie-info">
+                    <div class="stars" id="stars-${movie.movieId}">
+                        ${createStarRating(0)}
+                    </div>
+                    <span class="rating-count" id="rating-${movie.movieId}">...</span>
                 </div>
-                <span class="rating-count" id="rating-${movie.movieId}">...</span>
-            </div>
-        `;
+            `;
         
         movieGrid.appendChild(movieCard);
 
@@ -130,9 +130,10 @@ function renderMovies() {
 
         // Ενημέρωση αστεριών (χρησιμοποιώντας τη συνάρτηση που ήδη έχεις)
         const starsElement = document.getElementById(`stars-${movie.movieId}`);
-        if (starsElement && avgRating !== "N/A" && avgRating !== "Error") {
-            starsElement.innerHTML = createStarRating(avgRating);
-        }
+            if (starsElement) {
+                const ratingValue = (avgRating === "N/A" || avgRating === "Error") ? 0 : avgRating;
+                starsElement.innerHTML = createStarRating(ratingValue);
+            }
     });
 }
 
@@ -326,6 +327,7 @@ async function renderRecommendationCarousel() {
         // Χρησιμοποιούμε Promise.all για να φέρουμε όλα τα ratings ταυτόχρονα
         const cardsHTML = await Promise.all(recommendedMovies.map(async (movie, index) => {
             const avgRating = await fetchAverageRating(movie.movieId);
+            const ratingValue = (avgRating === "N/A" || avgRating === "Error") ? 0 : avgRating;
             const starsHTML = createStarRating(avgRating);
             
             return `
