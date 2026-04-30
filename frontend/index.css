@@ -801,3 +801,91 @@ body.menu-open .floating-menu {
 
 .toast.success { background-color: #10b981; } /* Πράσινο για επιτυχία */
 .toast.error { background-color: #ef4444; }   /* Κόκκινο για αποτυχία */
+
+/* Recommendations View Styles */
+#recommendationsView .carousel-container {
+    margin-top: 60px; /* Απόσταση από τον τίτλο/separator */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px; /* Χώρος ανάμεσα στα βέλη και τις κάρτες */
+}
+
+/* Recommendations View - Anti-Jump Styles */
+#recommendationsView .carousel {
+    display: flex;
+    gap: 10px; /* Μικρότερο gap γιατί το scale προσθέτει κενό */
+    align-items: center;
+    list-style: none;
+    padding: 100px 0; 
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    width: 100%; /* Χρησιμοποίησε το container width */
+    scrollbar-width: none;
+}
+
+#recommendationsView .carousel-item {
+    flex: 0 0 auto;
+    /* ΟΛΕΣ οι κάρτες έχουν πλέον το ίδιο σταθερό μέγεθος βάσης */
+    width: 300px; 
+    height: 150px;
+    scroll-snap-align: center;
+    
+    /* Η μαγεία: Μεταβαίνουμε στο scale αντί για width/height */
+    transform: scale(0.7); 
+    opacity: 0.4;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease;
+    
+    background: rgba(45, 18, 80, 0.4);
+    border: 2px solid rgba(255, 20, 147, 0.3);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#recommendationsView .carousel-item.active {
+    /* Η ενεργή κάρτα απλά επανέρχεται στο φυσικό της μέγεθος ή λίγο παραπάνω */
+    transform: scale(1.1); 
+    opacity: 1;
+    border: 2px solid #ff1493;
+    box-shadow: 0 0 40px rgba(255, 20, 147, 0.4);
+    background: rgba(45, 18, 80, 0.8);
+    z-index: 10;
+}
+
+#recommendationsView .movie-title {
+    font-family: "Alumni Sans SC", sans-serif;
+    /* Σταθερό μέγεθος γραμματοσειράς - το scale θα την μεγαλώσει αυτόματα */
+    font-size: 1.5rem; 
+    color: white;
+    text-align: center;
+    pointer-events: none;
+}
+
+#recommendationsView .carousel-item.active .movie-title {
+    font-size: 1.8rem; /* Μεγάλο για την κεντρική */
+}
+
+/* Βέλη πλοήγησης */
+.carousel-arrow {
+    background: none;
+    border: none;
+    color: #ff1493;
+    font-size: 3rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+/* Προσθήκη στο τέλος του αρχείου */
+/* Διορθώσεις για το Recommendations View */
+#recommendationsView {
+    padding-top: 150px; /* Απόσταση για να μην κρύβεται πίσω από το Global Logo */
+    min-height: 100vh;
+}
+
+#recommendationsView .main-content {
+    margin-top: 0; /* Αφαιρούμε το margin αφού βάλαμε padding στο view */
+    padding-top: 0;
+}

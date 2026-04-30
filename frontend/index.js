@@ -4,6 +4,8 @@ const MOVIES_PER_PAGE = 12;
 let currentPage = 1;
 let allMovies = []; // Εδώ θα μπαίνουν οι πραγματικές ταινίες από τη βάση
 let filteredMovies = [];
+let recommendedMovies = []; // Για να αποθηκεύουμε τις ταινίες που επιστρέφει ο Pearson
+let activeRecIndex = 0;     // Για να ξέρουμε ποια ταινία είναι στο κέντρο του carousel
 
 // 1. Φόρτωση ταινιών από το Backend
 async function fetchMovies(query = "") {
@@ -316,6 +318,65 @@ function updateStarsUI(ratingToDisplay = currentRating) {
     });
 }
 
+function renderRecommendationCarousel() {
+    const carousel = document.getElementById('recommendationCarousel');
+    if (!carousel) return;
+
+    // Δημιουργία μόνο αν είναι άδειο
+    if (carousel.children.length === 0) {
+        carousel.innerHTML = recommendedMovies.map((movie, index) => `
+            <li class="carousel-item" id="rec-item-${index}" onclick="setActiveRec(${index})">
+                <h3 class="movie-title">${movie.title}</h3>
+            </li>
+        `).join('');
+    }
+
+    // Ενημέρωση κλάσεων
+    const items = carousel.querySelectorAll('.carousel-item');
+    items.forEach((item, index) => {
+        if (index === activeRecIndex) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+    
+    // Χρησιμοποιούμε requestAnimationFrame για απόλυτα smooth συγχρονισμό με την οθόνη
+    requestAnimationFrame(() => {
+        scrollToActive();
+    });
+}
+
+function setActiveRec(index) {
+    activeRecIndex = index;
+    renderRecommendationCarousel();
+}
+
+function moveCarousel(step) {
+    if (recommendedMovies.length === 0) return;
+
+    // Υπολογισμός νέου index
+    activeRecIndex = (activeRecIndex + step + recommendedMovies.length) % recommendedMovies.length;
+    
+    // Επανασχεδιασμός για να αλλάξει η κλάση .active (πυροδοτεί το CSS transition)
+    renderRecommendationCarousel();
+    
+    // Smooth κύλιση προς το νέο κέντρο
+    setTimeout(scrollToActive, 10);
+}
+
+function scrollToActive() {
+    const activeItem = document.querySelector(".carousel-item.active");
+    if (activeItem) {
+        activeItem.scrollIntoView({ 
+            behavior: "smooth", // Εξασφαλίζει smooth κίνηση
+            block: "nearest", 
+            inline: "center"   // Φέρνει το στοιχείο ακριβώς στη ΜΕΣΗ
+        });
+    }
+}
+
+
 // Υποβολή Βαθμολογίας
 document.getElementById('detailRateBtn').addEventListener('click', () => {
     if (currentRating === 0) {
@@ -484,6 +545,52 @@ addMovieForm.addEventListener('submit', async (e) => {
         
         // Σε περίπτωση αποτυχίας, το modal μπορεί να μείνει ανοιχτό και να βγάλει το κόκκινο μήνυμα
         showToast(`Could not save the movie. ${error.message}`, 'error');
+    }
+});
+
+// Σύνδεση του κουμπιού Get Recommendations
+document.querySelector('.floating-action--secondary').addEventListener('click', async () => {
+    setMenuOpen(false);
+    
+    const savedRatings = JSON.parse(sessionStorage.getItem('movieRatings')) || {};
+    
+    if (Object.keys(savedRatings).length === 0) {
+        showToast("Please rate some movies first!", "error");
+        return;
+    }
+
+    const ratingsArray = Object.entries(savedRatings).map(([id, rating]) => ({
+        movieId: parseInt(id),
+        rating: rating
+    }));
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/recommendations`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ratings: ratingsArray })
+        });
+
+        const data = await response.json();
+
+        if (data.status === "success" && data.recommendations && data.recommendations.length > 0) {
+            recommendedMovies = data.recommendations;
+            activeRecIndex = 0; 
+            
+            document.getElementById('recommendationCarousel').innerHTML = '';
+            renderRecommendationCarousel();
+            
+            // Αλλαγή view μόνο αν υπάρχουν ταινίες
+            // document.getElementById('homeView').classList.add('hidden');
+            // document.getElementById('detailsView').classList.add('hidden');
+            document.getElementById('recommendationsView').classList.remove('hidden');
+            
+        } else {
+            // Αν η λίστα είναι κενή, εμφανίζουμε ένα φιλικό μήνυμα
+            showToast("Help us get to know you better! Rate a few more movies and we’ll find your perfect picks.", "error");
+        }
+    } catch (error) {
+        showToast("Failed to connect to the recommendation engine.", "error");
     }
 });
 

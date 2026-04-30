@@ -124,6 +124,37 @@
         </section>
     </div>
 
+    <!-- ========================================== -->
+    <!-- VIEW 3: RECOMMENDATIONS VIEW (Carousel)    -->
+    <!-- ========================================== -->
+<!-- VIEW 3: RECOMMENDATIONS VIEW -->
+<div id="recommendationsView" class="hidden">
+    <div class="container"> <!-- Προσθήκη container για ταύτιση περιθωρίων -->
+        <main class="main-content"> <!-- Προσθήκη κλάσης για ταύτιση κάθετων αποστάσεων -->
+            <section class="recommendations">
+                <h2 class="section-title">Recommended for you</h2>
+                <!-- Το separator στην αρχική σου είναι το border-bottom του section-title -->
+                
+                <div class="carousel-container">
+                    <button class="carousel-arrow left" onclick="moveCarousel(-1)">❮</button>
+                    <div class="carousel" id="recommendationCarousel">
+                        <!-- Rendered by JS -->
+                    </div>
+                    <button class="carousel-arrow right" onclick="moveCarousel(1)">❯</button>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Το βελάκι επιστροφής -->
+        <button class="back-button" onclick="returnToHome()" style="position: absolute; left: 80px; bottom: 40px;">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#c6108f" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter">
+                <polyline points="10 5 3 12 10 19"></polyline>
+                <path d="M3 12h15V4"></path>
+            </svg>
+        </button>
+    </div>
+</div>
+
 
     <!-- Modal για Προσθήκη Ταινίας -->
     <div class="backdrop" id="backdrop" hidden></div>
@@ -176,7 +207,7 @@
     <div id="toast" class="toast">
         <span id="toastMessage"></span>
     </div>
-    
+
     <script src="index.js"></script>
 
 </body>
