@@ -9,10 +9,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Covered+By+Your+Grace&family=Patrick+Hand&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Alumni+Sans+SC:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
+    <!-- Το θολό υπόβαθρο που εμφανίζεται όταν ανοίγει το μενού -->
+    <div class="screen-blur" id="screenBlur"></div>
+    <!-- Το αιωρούμενο μενού -->
+    <div class="floating-menu" id="floatingMenu">
+        <button class="floating-action floating-action--primary" type="button">+ Add a movie</button>
+        <button class="floating-action floating-action--secondary" type="button">☺ Get Recommendations</button>
+        <button class="floating-close" id="menuClose" type="button" aria-label="Close menu">×</button>
+    </div>
+
     <!-- ========================================== -->
     <!-- SHARED APP SHELL (Global Logo & Menu)      -->
     <!-- ========================================== -->
@@ -114,6 +124,60 @@
         </section>
     </div>
 
+
+    <!-- Modal για Προσθήκη Ταινίας -->
+    <div class="backdrop" id="backdrop" hidden></div>
+
+    <dialog class="add-movie-modal" id="addMovieModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add a movie</h2>
+            </div>
+
+            <form class="modal-form" id="addMovieForm">
+                <div class="form-group">
+                    <label for="movieTitleInput" class="form-label">MOVIE TITLE</label>
+                    <input id="movieTitleInput" type="text" class="form-input" placeholder="Enter new movie's title..." required />
+                </div>
+
+                <div class="form-group">
+                    <label for="movieGenreSelect" class="form-label">GENRES <span style="font-size: 0.8rem; text-transform: none; color: #666;">(Hold Ctrl/Cmd to select multiple)</span></label>
+                    <select id="movieGenreSelect" class="form-select" multiple required size="5">
+                        <option value="Action">Action</option>
+                        <option value="Adventure">Adventure</option>
+                        <option value="Animation">Animation</option>
+                        <option value="Children">Children</option>
+                        <option value="Comedy">Comedy</option>
+                        <option value="Crime">Crime</option>
+                        <option value="Documentary">Documentary</option>
+                        <option value="Drama">Drama</option>
+                        <option value="Fantasy">Fantasy</option>
+                        <option value="Film-Noir">Film-Noir</option>
+                        <option value="Horror">Horror</option>
+                        <option value="Musical">Musical</option>
+                        <option value="Mystery">Mystery</option>
+                        <option value="Romance">Romance</option>
+                        <option value="Sci-Fi">Sci-Fi</option>
+                        <option value="Thriller">Thriller</option>
+                        <option value="War">War</option>
+                        <option value="Western">Western</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-cancel" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-save">Save</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span id="toastMessage"></span>
+    </div>
+    
     <script src="index.js"></script>
+
 </body>
 </html>

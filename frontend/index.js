@@ -288,3 +288,153 @@ document.getElementById('detailRateBtn').addEventListener('click', () => {
     detailFeedback.textContent = `Success! Rated ${currentRating}/5 for movie: ${movieTitle}`;
 
 });
+
+// ==========================================
+// FLOATING MENU LOGIC
+// ==========================================
+const menuBtn = document.getElementById('menuBtn');
+const floatingMenu = document.getElementById('floatingMenu');
+const menuClose = document.getElementById('menuClose');
+
+// Συνάρτηση που ανοίγει/κλείνει το μενού
+function setMenuOpen(open) {
+    // Κρατάμε ΜΟΝΟ αυτή τη γραμμή. Το CSS θα αναλάβει πλέον όλη τη μαγεία της εμφάνισης!
+    document.body.classList.toggle("menu-open", open);
+}
+
+// Κλικ στο Hamburger icon
+menuBtn.addEventListener('click', () => {
+    const isOpen = document.body.classList.contains("menu-open");
+    setMenuOpen(!isOpen);
+});
+
+// Κλικ στο κουμπί X
+menuClose.addEventListener('click', () => {
+    setMenuOpen(false);
+});
+
+// Κλείσιμο αν ο χρήστης πατήσει το πλήκτρο Escape στο πληκτρολόγιο
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+        setMenuOpen(false);
+    }
+});
+
+// Κλείσιμο αν ο χρήστης κάνει κλικ στο θολό υπόβαθρο
+document.getElementById('screenBlur').addEventListener('click', () => {
+    setMenuOpen(false);
+});
+
+// --- Modal Elements ---
+const addMovieBtn = Array.from(document.querySelectorAll('.floating-menu button')).find(btn => btn.textContent.includes('+ Add a movie'));
+const addMovieModal = document.getElementById('addMovieModal');
+const backdrop = document.getElementById('backdrop');
+const cancelBtn = document.getElementById('cancelBtn');
+const addMovieForm = document.getElementById('addMovieForm');
+
+// --- Νέα Συνάρτηση για τα μηνύματα (Toast) ---
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+
+    toastMessage.textContent = message;
+    
+    // Αφαιρούμε παλιές κλάσεις και βάζουμε τις νέες
+    toast.classList.remove('success', 'error', 'show');
+    toast.classList.add(type);
+    
+    // Μικρή καθυστέρηση για να εφαρμόσει ο browser την αλλαγή
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    // Κρύβουμε το μήνυμα αυτόματα μετά από 3.5 δευτερόλεπτα
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3500);
+}
+
+// --- Συνάρτηση για απαλό κλείσιμο του Modal ---
+function closeModalSmoothly() {
+    addMovieModal.classList.add('is-closing');
+    backdrop.classList.add('is-closing');
+
+    setTimeout(() => {
+        addMovieModal.close();
+        backdrop.hidden = true;
+        addMovieModal.classList.remove('is-closing');
+        backdrop.classList.remove('is-closing');
+    }, 300); // 300ms όση και η διάρκεια του CSS animation
+}
+
+// Άνοιγμα Modal
+addMovieBtn.addEventListener('click', () => {
+    setMenuOpen(false); 
+    backdrop.hidden = false;
+    addMovieModal.showModal();
+});
+
+// Κλείσιμο Modal (Cancel)
+cancelBtn.addEventListener('click', () => {
+    closeModalSmoothly();
+});
+
+// Υποβολή Φόρμας
+addMovieForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const title = document.getElementById('movieTitleInput').value;
+    const genreSelect = document.getElementById('movieGenreSelect');
+    
+    const selectedGenres = Array.from(genreSelect.selectedOptions)
+                                .map(option => option.value)
+                                .join('|');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/movies`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: title,
+                genres: selectedGenres
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || result.status === "fail") {
+            throw new Error(result.message || `Server error: ${response.status}`);
+        }
+
+        const newMovie = {
+            movieId: result.movieId,
+            title: title,
+            genres: selectedGenres
+        };
+
+        allMovies.unshift(newMovie);
+        filteredMovies = [...allMovies];
+        
+        renderMovies();
+        addMovieForm.reset();
+        
+        // 1. Κλείνουμε το modal απαλά
+        closeModalSmoothly(); 
+        
+        // 2. Εμφανίζουμε το κομψό μήνυμα επιτυχίας!
+        showToast(`Movie "${title}" saved successfully!`, 'success');
+
+    } catch (error) {
+        console.error("Σφάλμα κατά την αποθήκευση:", error);
+        
+        // Σε περίπτωση αποτυχίας, το modal μπορεί να μείνει ανοιχτό και να βγάλει το κόκκινο μήνυμα
+        showToast(`Could not save the movie. ${error.message}`, 'error');
+    }
+});
+
+// Κλείσιμο αν πατηθεί το backdrop
+backdrop.addEventListener('click', () => {
+    closeModalSmoothly();
+});

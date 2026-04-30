@@ -353,7 +353,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    font-family: "Antonio", sans-serif;
+    font-family: "Alumni Sans SC", sans-serif;
     font-size: 80px;
     font-weight: 300;
     line-height: 1;
@@ -372,14 +372,14 @@ body {
 .genre-label {
     margin: 0 0 14px;
     color: rgba(255, 255, 255, 0.56);
-    font-family: "Antonio", sans-serif;
+    font-family: "Alumni Sans SC", sans-serif;
     font-size: 24px;
     font-weight: 300;
 }
 
 .genre-list {
     margin: 0;
-    font-family: "Antonio", sans-serif;
+    font-family: "Alumni Sans SC", sans-serif;
     font-size: 20px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -487,17 +487,19 @@ body {
 /* GLOBAL APP SHELL                          */
 /* ========================================= */
 .global-header {
-    position: absolute; /* Αιωρείται πάνω από όλα τα views */
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     z-index: 1000;
-    padding-top: 30px; /* Ίδιο ύψος με το αρχικό header */
-    pointer-events: none; /* Επιτρέπει στα κλικ να "περνούν" από τον κενό χώρο στα στοιχεία από κάτω */
+    padding-top: 30px;
+    /* Απαραίτητο: Τα κλικ περνάνε από μέσα */
+    pointer-events: none; 
 }
 
 .global-header .header-left {
-    pointer-events: auto; /* Τα κουμπιά πατιούνται κανονικά */
+    /* Επαναφέρουμε τα κλικ μόνο εκεί που χρειάζεται */
+    pointer-events: auto; 
 }
 
 /* ========================================= */
@@ -521,3 +523,281 @@ body {
     /* Η κίνηση θα διαρκεί 0.4 δευτερόλεπτα και θα φρενάρει μαλακά στο τέλος (ease-out) */
     animation: fadeSlideIn 0.4s ease-out forwards;
 }
+
+/* ========================================= */
+/* FLOATING MENU & BLUR                      */
+/* ========================================= */
+.screen-blur {
+    position: fixed;
+    inset: 0;
+    background: rgba(208, 196, 224, 0.42);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 1005;
+    opacity: 0;
+    /* Τελείως ανενεργό όταν είναι κλειστό */
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 180ms ease, visibility 180ms;
+}
+
+body.menu-open .screen-blur {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.floating-menu {
+    position: fixed;
+    left: 20px; 
+    top: 30px; 
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 180px;
+    z-index: 1010; 
+    align-items: flex-start;
+    opacity: 0;
+    /* Τελείως ανενεργό όταν είναι κλειστό */
+    visibility: hidden;
+    pointer-events: none;
+    transform-origin: top left; 
+    transform: rotate(-90deg) scale(0.5); 
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+}
+
+body.menu-open .floating-menu {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: rotate(0deg) scale(1); 
+}
+
+#homeView {
+    position: relative;
+    /* Το φέρνουμε μπροστά από το background για να δέχεται κλικ */
+    z-index: 5; 
+}
+
+/* Τα κουμπιά του μενού */
+.floating-action {
+    min-width: 118px;
+    height: 37px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 999px;
+    color: #2d1760;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 10px 20px rgba(65, 46, 96, 0.14);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.floating-action--primary,
+.floating-action--secondary {
+    background: linear-gradient(180deg, #a9e0ff 0%, #7fc5ff 100%);
+}
+
+/* Το κουμπί κλεισίματος (Χ) */
+.floating-close {
+    margin-left: 92px; 
+    width: 43px;
+    height: 43px;
+    border: 0;
+    border-radius: 50%;
+    background: #4b1ea5; 
+    color: #fff;
+    font-size: 24px;
+    line-height: 1;
+    box-shadow: 0 10px 20px rgba(74, 30, 165, 0.28);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.floating-close:hover {
+    transform: scale(1.05);
+}
+
+/* --- ADD MOVIE MODAL --- */
+.backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(3px);
+    z-index: 2500; /* Πιο ψηλά από όλα */
+    /* ΑΦΑΙΡΕΣΕ το pointer-events: none αν υπάρχει εδώ */
+    pointer-events: auto; 
+}
+
+.add-movie-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 3px solid #b0e3ff;
+    border-radius: 16px;
+    background: #a3d9ff;
+    padding: 0;
+    width: 340px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+    z-index: 2600; /* Το modal ακόμα πιο ψηλά */
+}
+
+.add-movie-modal::backdrop { display: none; }
+
+.modal-content { padding: 28px 24px; }
+.modal-title { 
+    margin: 0 0 22px; 
+    font-family: "Alumni Sans SC", sans-serif;
+    font-size: 1.8rem;
+    color: #1a1a2e;
+}
+
+.modal-form { display: flex; flex-direction: column; gap: 20px; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-label { 
+    font-family: "Alumni Sans SC", sans-serif; /* Προσθήκη Γραμματοσειράς */
+    font-size: 1.2rem; 
+    color: #1a1a2e; 
+    text-transform: uppercase; 
+}
+
+.form-input, .form-select {
+    font-family: "Roboto", sans-serif; /* Προσθήκη Γραμματοσειράς */
+    padding: 10px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    background: white;
+    font-size: 1rem; /* Λίγο μεγαλύτερα γράμματα για να διαβάζονται εύκολα */
+}
+
+.modal-actions { display: flex; gap: 12px; margin-top: 16px; }
+.btn { 
+    font-family: "Alumni Sans SC", sans-serif; /* Προσθήκη Γραμματοσειράς */
+    flex: 1; 
+    padding: 10px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    font-weight: 600; 
+    font-size: 1.2rem;
+}
+.btn-cancel { font-family: "Roboto", sans-serif; font-weight: 400; background: transparent; border: 1px solid #1a1a2e; }
+.btn-save { font-family: "Roboto", sans-serif; font-weight: 400; background: #000; color: #fff; border: none; }
+
+/* ========================================= */
+/* ANIMATIONS ΓΙΑ ΤΟ ADD MOVIE MODAL         */
+/* ========================================= */
+
+/* 1. Η κίνηση για το θολό φόντο (Fade In) */
+@keyframes backdropFade {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* 2. Η κίνηση για το παραθυράκι (Pop In) */
+@keyframes modalPopIn {
+    0% {
+        opacity: 0;
+        /* Ξεκινάει λίγο πιο κάτω (-40% αντί για -50%) και πιο μικρό (scale 0.8) */
+        transform: translate(-50%, -40%) scale(0.8); 
+    }
+    100% {
+        opacity: 1;
+        /* Καταλήγει στην κανονική του θέση */
+        transform: translate(-50%, -50%) scale(1); 
+    }
+}
+
+/* Εφαρμόζουμε την κίνηση στο φόντο ΜΟΝΟ όταν δεν είναι hidden */
+.backdrop:not([hidden]) {
+    animation: backdropFade 0.3s ease-out forwards;
+}
+
+/* Εφαρμόζουμε την κίνηση στο modal ΜΟΝΟ όταν είναι ανοιχτό (open attribute) */
+.add-movie-modal[open] {
+    /* Χρησιμοποιούμε cubic-bezier για να κάνει μια πολύ ελαφριά, φυσική αναπήδηση στο τέλος */
+    animation: modalPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* 3. Η κίνηση για το θολό φόντο (Fade Out) */
+@keyframes backdropFadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* 4. Η κίνηση για το παραθυράκι (Pop Out) */
+@keyframes modalPopOut {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        /* Πέφτει ελαφρώς και μικραίνει καθώς εξαφανίζεται */
+        transform: translate(-50%, -40%) scale(0.8); 
+    }
+}
+
+/* Κλάσεις που θα βάζει η JS όταν κλείνουμε το modal */
+.backdrop.is-closing {
+    animation: backdropFadeOut 0.3s ease-in forwards;
+}
+
+.add-movie-modal.is-closing {
+    animation: modalPopOut 0.3s ease-in forwards;
+}
+
+/* ========================================= */
+/* MULTIPLE SELECT STYLES                    */
+/* ========================================= */
+.form-select[multiple] {
+    height: 140px; /* Σταθερό ύψος για να χωράει 5-6 επιλογές */
+    overflow-y: auto; /* Scrollbar όταν χρειάζεται */
+    padding: 6px;
+}
+
+.form-select[multiple] option {
+    padding: 8px 12px;
+    margin-bottom: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+/* Χρώμα όταν επιλέγεις ένα είδος (χρησιμοποιούμε το ροζ σου!) */
+.form-select[multiple] option:checked {
+    background-color: #c6108f;
+    color: #ffffff;
+}
+
+/* ========================================= */
+/* TOAST NOTIFICATION                        */
+/* ========================================= */
+.toast {
+    position: fixed;
+    bottom: -100px; /* Ξεκινάει κρυμμένο κάτω από την οθόνη */
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-family: "Alumni Sans SC", sans-serif;
+    font-size: 1.4rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: #fff;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    z-index: 3000;
+    transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none; /* Να μην εμποδίζει τα κλικ */
+}
+
+.toast.show {
+    bottom: 40px; /* Εμφανίζεται με ένα ωραίο slide up */
+}
+
+.toast.success { background-color: #10b981; } /* Πράσινο για επιτυχία */
+.toast.error { background-color: #ef4444; }   /* Κόκκινο για αποτυχία */
