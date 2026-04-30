@@ -33,7 +33,7 @@ function createMovieCard(movie) {
  
 
     return `
-        <div class="movie-card">
+        <div class="movie-card" style="cursor: pointer;" onclick="showMovieDetails(${movie.movieId})">
             <div class="movie-name">${movie.title}</div>
             <div class="movie-info">
                 <div class="stars">${createStarRating(displayRating)}</div>
@@ -154,3 +154,137 @@ document.addEventListener('DOMContentLoaded', () => {
 function handleRate(movieId) {
     alert(`Rating for Movie ID: ${movieId}`);
 }
+
+// ==========================================
+// DETAILS VIEW LOGIC
+// ==========================================
+let currentSelectedMovieId = null;
+let currentRating = 0;
+
+function showMovieDetails(movieId) {
+    const movie = allMovies.find(m => m.movieId === movieId);
+    if (!movie) return;
+    
+    currentSelectedMovieId = movieId;
+
+    // --- ΕΞΥΠΝΗ ΑΝΑΚΤΗΣΗ ΒΑΘΜΟΛΟΓΙΑΣ ---
+    // Κοιτάμε αν υπάρχει ήδη βαθμολογία στο session για το συγκεκριμένο ID
+    const savedRatings = JSON.parse(sessionStorage.getItem('movieRatings')) || {};
+    
+    if (savedRatings[movieId]) {
+        // Αν υπάρχει, την επαναφέρουμε!
+        currentRating = savedRatings[movieId];
+        document.getElementById('detailFeedback').textContent = `You previously rated this ${currentRating}/5.`;
+    } else {
+        // Αν όχι, ξεκινάμε από το μηδέν
+        currentRating = 0; 
+        document.getElementById('detailFeedback').textContent = "Select a rating to continue.";
+    }
+    
+    // Ενημερώνουμε τα αστέρια στην οθόνη βάσει του currentRating
+    updateStarsUI();
+
+    // Διαχωρισμός Τίτλου και Έτους (Regex για να βρει την παρένθεση)
+    const match = movie.title.match(/(.+?)\s*(\(\d{4}\))?$/);
+    const titleOnly = match ? match[1] : movie.title;
+    const yearOnly = (match && match[2]) ? match[2] : "";
+
+    // Αλλαγή των genres (από Action|Comedy σε ACTION • COMEDY)
+    const formattedGenres = movie.genres ? movie.genres.split('|').join(' • ') : "UNKNOWN";
+
+    document.getElementById('detailTitle').textContent = titleOnly;
+    document.getElementById('detailYear').textContent = yearOnly;
+    document.getElementById('detailGenres').textContent = formattedGenres;
+
+    // Εναλλαγή Οθονών
+    document.getElementById('homeView').classList.add('hidden');
+    document.getElementById('detailsView').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function hideMovieDetails() {
+    document.getElementById('detailsView').classList.add('hidden');
+    document.getElementById('homeView').classList.remove('hidden');
+}
+
+// Επιστροφή στην αρχική από το λογότυπο
+function returnToHome() {
+    // Σιγουρευόμαστε ότι το Home είναι ορατό και το Details κρυφό
+    document.getElementById('detailsView').classList.add('hidden');
+    document.getElementById('homeView').classList.remove('hidden');
+    
+    // Κάνουμε ομαλό scroll τέρμα πάνω!
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Λογική για τα Αστέρια στο δεξί panel (Μισά & Ολόκληρα)
+const detailStars = document.querySelectorAll('.details-star');
+const detailFeedback = document.getElementById('detailFeedback');
+const starContainer = document.getElementById('detailRatingStars');
+
+detailStars.forEach((star, index) => {
+    // Συνάρτηση που βρίσκει αν το ποντίκι είναι στο αριστερό (< 50%) ή δεξί μισό
+    const calculateRating = (e) => {
+        const isHalf = e.offsetX < e.target.offsetWidth / 2;
+        return index + (isHalf ? 0.5 : 1);
+    };
+
+    star.addEventListener('mousemove', (e) => {
+        updateStarsUI(calculateRating(e));
+    });
+
+    star.addEventListener('click', (e) => {
+        currentRating = calculateRating(e);
+        updateStarsUI(currentRating);
+        detailFeedback.textContent = `You selected ${currentRating} stars. Ready to rate!`;
+    });
+});
+
+if (starContainer) {
+    starContainer.addEventListener('mouseleave', () => {
+        updateStarsUI(currentRating);
+    });
+}
+
+function updateStarsUI(ratingToDisplay = currentRating) {
+    detailStars.forEach((star, index) => {
+        // Ξεκινάμε κάνοντας το αστέρι "άδειο" και αφαιρώντας το "μισό"
+        star.classList.add('empty');
+        star.classList.remove('half');
+        
+        if (ratingToDisplay >= index + 1) {
+            // Ολόκληρο αστέρι (Αφαιρούμε το empty, μένει το φουλ ροζ της .star)
+            star.classList.remove('empty');
+        } else if (ratingToDisplay > index) {
+            // Μισό αστέρι (Αφαιρούμε το empty, προσθέτουμε το half)
+            star.classList.remove('empty');
+            star.classList.add('half');
+        }
+    });
+}
+
+// Υποβολή Βαθμολογίας
+document.getElementById('detailRateBtn').addEventListener('click', () => {
+    if (currentRating === 0) {
+        detailFeedback.textContent = "Please select a rating first.";
+        return;
+    }
+    
+    // Αποθήκευση ΜΟΝΟ για το τρέχον session ---
+    // 1. Παίρνουμε τις υπάρχουσες βαθμολογίες του session
+    const savedRatings = JSON.parse(sessionStorage.getItem('movieRatings')) || {};
+    
+    // 2. Προσθέτουμε/Ενημερώνουμε τη βαθμολογία για τη συγκεκριμένη ταινία
+    savedRatings[currentSelectedMovieId] = currentRating;
+    
+    // 3. Αποθηκεύουμε ξανά στο sessionStorage
+    sessionStorage.setItem('movieRatings', JSON.stringify(savedRatings));
+    // -------------------------------------------------------------
+
+    // Διαβάζουμε τον τίτλο της ταινίας κατευθείαν από το HTML στοιχείο
+    const movieTitle = document.getElementById('detailTitle').textContent;
+    
+    // Εμφανίζουμε το μήνυμα επιτυχίας με τον τίτλο
+    detailFeedback.textContent = `Success! Rated ${currentRating}/5 for movie: ${movieTitle}`;
+
+});

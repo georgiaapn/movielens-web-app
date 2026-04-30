@@ -4,53 +4,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MovieLens</title>
+    <!-- Γραμματοσειρές (Παλιές & Νέες) -->
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Covered+By+Your+Grace&family=Patrick+Hand&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Alumni+Sans+SC:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
-    <div class="container">
-        <!-- Header -->
-<header class="header">
+    <!-- ========================================== -->
+    <!-- SHARED APP SHELL (Global Logo & Menu)      -->
+    <!-- ========================================== -->
+    <div class="global-header">
+        <div class="container">
             <div class="header-left">
                 <button class="menu-btn" id="menuBtn">
                     <span></span>
                     <span></span>
                     <span></span>
                 </button>
-                <h1 class="logo">MovieLens</h1>
+                <h1 class="logo" onclick="returnToHome()">MovieLens</h1>
             </div>
+        </div>
+    </div>
 
-            <div class="search-container">
-                <input type="text" class="search-input" placeholder="Search movies ..." id="searchInput">
-                <button class="search-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <path d="m21 21-4.35-4.35"></path>
+    <!-- ========================================== -->
+    <!-- VIEW 1: HOME PAGE                          -->
+    <!-- ========================================== -->
+    <div id="homeView">
+        <div class="container">
+            <!-- Το Header της αρχικής κρατάει πλέον ΜΟΝΟ την αναζήτηση -->
+            <header class="header" style="justify-content: flex-end;">
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search movies ..." id="searchInput">
+                    <button class="search-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <main class="main-content">
+                <section class="movies-section">
+                    <h2 class="section-title">All movies</h2>
+                    <div class="movies-grid" id="moviesGrid">
+                        <!-- Movie cards από JS -->
+                    </div>
+                </section>
+            </main>
+
+            <div class="pagination" id="pagination">
+                <!-- Pagination από JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: MOVIE DETAILS (Η Νέα Οθόνη)        -->
+    <!-- ========================================== -->
+    <div id="detailsView" class="hidden">
+        <section class="movie-detail">
+            <!-- Αριστερό Panel: Πληροφορίες -->
+            <div class="movie-detail__left">
+                
+                <!-- Το λογότυπο διαγράφηκε από εδώ για να φαίνεται το Global! -->
+
+                <div class="movie-copy">
+                    <h2 class="movie-title">
+                        <span id="detailTitle">Τίτλος Ταινίας</span>
+                        <span id="detailYear">(Έτος)</span>
+                    </h2>
+
+                    <div class="genre-block">
+                        <p class="genre-label">GENRES</p>
+                        <p class="genre-list" id="detailGenres">Είδος • Είδος</p>
+                    </div>
+                </div>
+
+                <!-- Κουμπί Επιστροφής -->
+                <button class="back-button" id="backButton" type="button" aria-label="Go back" onclick="hideMovieDetails()">
+                    <!-- Το νέο SVG εικονίδιο -->
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter">
+                        <polyline points="10 5 3 12 10 19"></polyline>
+                        <path d="M3 12h15V4"></path>
                     </svg>
                 </button>
             </div>
-        </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- All Movies Section -->
-            <section class="movies-section">
-                <h2 class="section-title">All movies</h2>
-                
-                <!-- Movies Grid -->
-                <div class="movies-grid" id="moviesGrid">
-                    <!-- Movie cards will be inserted here by JavaScript -->
+            <!-- Δεξί Panel: Βαθμολογία -->
+            <aside class="movie-detail__right">
+                <div class="rating-panel">
+                    <p class="rating-panel__prompt">LET US KNOW HOW MUCH YOU LIKED IT!</p>
+                    
+                    <div class="rating-stars" id="detailRatingStars">
+                        <button class="star empty details-star" data-rating="1">★</button>
+                        <button class="star empty details-star" data-rating="2">★</button>
+                        <button class="star empty details-star" data-rating="3">★</button>
+                        <button class="star empty details-star" data-rating="4">★</button>
+                        <button class="star empty details-star" data-rating="5">★</button>
+                    </div>
+
+                    <button class="rate-action" id="detailRateBtn">Rate</button>
+                    <p class="rating-feedback" id="detailFeedback">Select a rating to continue.</p>
                 </div>
-            </section>
-        </main>
-
-        <!-- Pagination -->
-        <div class="pagination" id="pagination">
-            <!-- Pagination controls will be inserted here by JavaScript -->
-        </div>
+            </aside>
+        </section>
     </div>
 
     <script src="index.js"></script>
