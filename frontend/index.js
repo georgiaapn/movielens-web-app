@@ -318,20 +318,31 @@ function updateStarsUI(ratingToDisplay = currentRating) {
     });
 }
 
-function renderRecommendationCarousel() {
+async function renderRecommendationCarousel() {
     const carousel = document.getElementById('recommendationCarousel');
     if (!carousel) return;
 
-    // Δημιουργία μόνο αν είναι άδειο
     if (carousel.children.length === 0) {
-        carousel.innerHTML = recommendedMovies.map((movie, index) => `
-            <li class="carousel-item" id="rec-item-${index}" onclick="setActiveRec(${index})">
-                <h3 class="movie-title">${movie.title}</h3>
-            </li>
-        `).join('');
+        // Χρησιμοποιούμε Promise.all για να φέρουμε όλα τα ratings ταυτόχρονα
+        const cardsHTML = await Promise.all(recommendedMovies.map(async (movie, index) => {
+            const avgRating = await fetchAverageRating(movie.movieId);
+            const starsHTML = createStarRating(avgRating);
+            
+            return `
+                <li class="carousel-item movie-card" id="rec-item-${index}" 
+                    onclick="showMovieDetails(${movie.movieId})">
+                    <div class="movie-name">${movie.title}</div>
+                    <div class="movie-info">
+                        <div class="stars">${starsHTML}</div>
+                        <span class="rating-count">${avgRating}</span>
+                    </div>
+                </li>
+            `;
+        }));
+        carousel.innerHTML = cardsHTML.join('');
     }
 
-    // Ενημέρωση κλάσεων
+    // Ενημέρωση ενεργής κλάσης
     const items = carousel.querySelectorAll('.carousel-item');
     items.forEach((item, index) => {
         if (index === activeRecIndex) {
@@ -341,10 +352,7 @@ function renderRecommendationCarousel() {
         }
     });
     
-    // Χρησιμοποιούμε requestAnimationFrame για απόλυτα smooth συγχρονισμό με την οθόνη
-    requestAnimationFrame(() => {
-        scrollToActive();
-    });
+    requestAnimationFrame(scrollToActive);
 }
 
 function setActiveRec(index) {
