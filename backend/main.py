@@ -88,6 +88,7 @@ def get_movie_ratings(movieId: int):
         conn.close()
 
 # Endpoint 3: Add a New Movie
+# Endpoint 3: Add a New Movie
 @app.post("/movielens/api/movies" , response_model=MovieAddResponse)
 def add_movie(movie: MovieCreate):
 
@@ -96,6 +97,14 @@ def add_movie(movie: MovieCreate):
         raise HTTPException(
             status_code=400, 
             detail={"status": "fail", "message": "Movie title cannot be empty."}
+        )
+        
+    # --- ΝΕΟ: Έλεγχος για Genres ---
+    # 2. Έλεγχος: Αν η λίστα με τα genres είναι κενή, επιστρέφουμε 400 Bad Request
+    if not movie.genres or len(movie.genres.strip()) == 0:
+        raise HTTPException(
+            status_code=400, 
+            detail={"status": "fail", "message": "You must select at least one genre."}
         )
     
     conn = get_db_connection()
