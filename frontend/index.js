@@ -21,7 +21,7 @@ async function fetchMovies(query = "") {
     } catch (error) {
         console.error("Error fetching movies:", error);
         document.getElementById('moviesGrid').innerHTML = 
-            '<p style="color: white; padding: 20px;">Αποτυχία σύνδεσης με το Backend. Σιγουρευτείτε ότι το uvicorn τρέχει.</p>';
+            '<p style="color: white; padding: 20px;">Failed to connect to Backend. Please ensure that the uvicorn server is running.</p>';
     }
 }
 
@@ -67,18 +67,71 @@ function createStarRating(rating) {
     return stars;
 }
 
-// 3. Render functions
-function renderMovies() {
-    const startIndex = (currentPage - 1) * MOVIES_PER_PAGE;
-    const endIndex = startIndex + MOVIES_PER_PAGE;
-    const paginatedMovies = filteredMovies.slice(startIndex, endIndex);
+// --- ΝΕΑ ΣΥΝΑΡΤΗΣΗ: Υπολογισμός Average Rating από το API ---
+async function fetchAverageRating(movieId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/ratings/${movieId}`); //
+        const data = await response.json();
 
-    const moviesGrid = document.getElementById('moviesGrid');
-    if (paginatedMovies.length === 0) {
-        moviesGrid.innerHTML = '<p style="color: white; padding: 20px;">No movies found.</p>';
-        return;
+        if (data.status === "success" && data.ratings.length > 0) {
+            // Υπολογισμός μέσου όρου
+            const sum = data.ratings.reduce((acc, curr) => acc + curr.rating, 0);
+            const avg = sum / data.ratings.length;
+            return avg.toFixed(1); // Επιστρέφει π.χ. "4.2"
+        }
+        return "N/A"; // Αν δεν υπάρχουν βαθμολογίες
+    } catch (error) {
+        console.error(`Error fetching ratings for movie ${movieId}:`, error);
+        return "Error";
     }
-    moviesGrid.innerHTML = paginatedMovies.map(movie => createMovieCard(movie)).join('');
+}
+
+// --- Τροποποιημένη renderMovies ---
+function renderMovies() {
+    const movieGrid = document.getElementById('moviesGrid');
+    if (!movieGrid) return;
+    
+    movieGrid.innerHTML = ''; 
+
+    // Παίρνουμε μόνο τις ταινίες της τρέχουσας σελίδας
+    const startIndex = (currentPage - 1) * MOVIES_PER_PAGE;
+    const moviesToRender = filteredMovies.slice(startIndex, startIndex + MOVIES_PER_PAGE);
+
+    moviesToRender.forEach(async (movie) => {
+        const movieCard = document.createElement('div');
+        movieCard.className = 'movie-card';
+        movieCard.style.cursor = 'pointer';
+        // Προσθήκη του click event για να ανοίγει το details view
+        movieCard.onclick = () => showMovieDetails(movie.movieId);
+        
+        // Χρησιμοποιούμε την αρχική σου δομή HTML
+        movieCard.innerHTML = `
+            <div class="movie-name">${movie.title}</div>
+            <div class="movie-info">
+                <div class="stars" id="stars-${movie.movieId}">
+                    <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+                </div>
+                <span class="rating-count" id="rating-${movie.movieId}">...</span>
+            </div>
+        `;
+        
+        movieGrid.appendChild(movieCard);
+
+        // Ανάκτηση πραγματικού rating
+        const avgRating = await fetchAverageRating(movie.movieId);
+        
+        // Ενημέρωση κειμένου βαθμολογίας
+        const ratingElement = document.getElementById(`rating-${movie.movieId}`);
+        if (ratingElement) {
+            ratingElement.textContent = avgRating;
+        }
+
+        // Ενημέρωση αστεριών (χρησιμοποιώντας τη συνάρτηση που ήδη έχεις)
+        const starsElement = document.getElementById(`stars-${movie.movieId}`);
+        if (starsElement && avgRating !== "N/A" && avgRating !== "Error") {
+            starsElement.innerHTML = createStarRating(avgRating);
+        }
+    });
 }
 
 // 4. Pagination & Navigation
