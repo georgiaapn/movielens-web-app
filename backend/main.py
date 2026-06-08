@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from database import get_db_connection
-from recommender import get_recommendations
-from models import (
+from .database import get_db_connection
+from .recommender import get_recommendations
+from .models import (
     MovieAddResponse,
     MovieCreate, 
     RecommendationRequest, 

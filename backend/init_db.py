@@ -1,9 +1,10 @@
 import sqlite3
 import csv
-import os
+from pathlib import Path
 
-DB_PATH = "movielens.db"
-DATA_DIR = "data"
+BASE_DIR = Path(__file__).resolve().parent
+DB_PATH = BASE_DIR / "movielens.db"
+DATA_DIR = BASE_DIR / "data"
 
 def init_database():
     conn = sqlite3.connect(DB_PATH)
@@ -45,7 +46,7 @@ def init_database():
 
     # Φόρτωση movies.csv
     try:
-        with open(os.path.join(DATA_DIR, 'movies.csv'), 'r', encoding='utf-8') as f:
+        with open(DATA_DIR / "movies.csv", 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             movies_data = [(row['movieId'], row['title'], row['genres']) for row in reader]
             cursor.executemany('INSERT OR IGNORE INTO movies (movieId, title, genres) VALUES (?, ?, ?)', movies_data)
@@ -55,7 +56,7 @@ def init_database():
 
     # Φόρτωση ratings.csv
     try:
-        with open(os.path.join(DATA_DIR, 'ratings.csv'), 'r', encoding='utf-8') as f:
+        with open(DATA_DIR / "ratings.csv", 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             ratings_data = [(row['userId'], row['movieId'], row['rating'], row['timestamp']) for row in reader]
             cursor.executemany('INSERT OR IGNORE INTO ratings (userId, movieId, rating, timestamp) VALUES (?, ?, ?, ?)', ratings_data)
@@ -65,7 +66,7 @@ def init_database():
 
     # Φόρτωση tags.csv
     try:
-        with open(os.path.join(DATA_DIR, 'tags.csv'), 'r', encoding='utf-8') as f:
+        with open(DATA_DIR / "tags.csv", 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             tags_data = [(row['userId'], row['movieId'], row['tag'], row['timestamp']) for row in reader]
             cursor.executemany('INSERT OR IGNORE INTO tags (userId, movieId, tag, timestamp) VALUES (?, ?, ?, ?)', tags_data)

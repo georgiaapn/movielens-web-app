@@ -1,4 +1,4 @@
-from database import get_db_connection
+from .database import get_db_connection
 import math
 
 TOP_K = 20   # Αριθμός πιο παρόμοιων χρηστών
