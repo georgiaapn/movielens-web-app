@@ -528,8 +528,12 @@ addMovieForm.addEventListener('submit', async (e) => {
 
         const result = await response.json();
 
-        if (!response.ok || result.status === "fail") {
-            throw new Error(result.message || `Server error: ${response.status}`);
+        if (!response.ok || result.status === "fail" || result.detail?.status === "fail") {
+            throw new Error(
+                result.message ||
+                result.detail?.message ||
+                `Server error: ${response.status}`
+            );
         }
 
         const newMovie = {
