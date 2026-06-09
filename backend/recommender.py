@@ -1,21 +1,22 @@
 from .database import get_db_connection
 import math
 
-TOP_K = 20   # Αριθμός πιο παρόμοιων χρηστών
-TOP_N = 10   # Αριθμός συστάσεων που επιστρέφουμε
+TOP_K = 20   # Number of most similar users
+TOP_N = 10   # Number of recommendations to return
 
 
+# e.g., common_ratings_u = [4.0, 5.0, 3.0], common_ratings_v = [5.0, 4.0, 2.0]
 def pearson_correlation(common_ratings_u: list, common_ratings_v: list) -> float:
     """
-    Υπολογίζουμε τον συντελεστή συσχέτισης Pearson μόνο για τις ταινίες που έχουν βαθμολογηθεί και από τους δύο,
-    δηλαδή μεταξύ δύο λιστών βαθμολογιών που αντιστοιχούν στις ίδιες ταινίες.
+    We compute the Pearson correlation coefficient only for the movies that have been rated by both users,
+    i.e. between two lists of ratings corresponding to the same movies.
 
     num = pSum - (sum1 * sum2) / n
     den = sqrt((sum1Sq - sum1²/n) * (sum2Sq - sum2²/n))
     r   = num / den
     """
 
-    # αριθμός κοινών ταινιών
+    # number of common ratings
     n = len(common_ratings_u)
     if n == 0:
         return 0.0
@@ -37,47 +38,48 @@ def pearson_correlation(common_ratings_u: list, common_ratings_v: list) -> float
  
 def get_recommendations(user_ratings: list) -> list:
     """
-    Δέχεται τα ratings του χρήστη (λίστα από {"movieId": int, "rating": float})
-    και επιστρέφει τις TOP_N συστάσεις με βάση το Pearson collaborative filtering.
+    Takes the user's ratings (a list of dictionaries with keys "movieId" and "rating")
+    and returns the TOP_N recommendations based on Pearson collaborative filtering.
     """
-    # Μετατρέπουμε την λίστα ratings του χρήστη σε dict {movieId: rating}
-    # π.χ. user_ratings = [
-    # {"movieId": 1,  "rating": 4.5},
-    # {"movieId": 32, "rating": 5.0},
-    # {"movieId": 10, "rating": 3.0}
-    # ] 
-    # γίνεται user_rated = {1: 4.5, 32: 5.0, 10: 3.0}
+    # We convert the user's ratings list into a dict {movieId: rating} for easier access
+    # e.g., user_ratings = [
+    #     {"movieId": 1,  "rating": 4.5},
+    #     {"movieId": 32, "rating": 5.0},
+    #     {"movieId": 10, "rating": 3.0}
+    # ]
+    # becomes user_rated = {1: 4.5, 32: 5.0, 10: 3.0}
     user_rated = {r["movieId"]: r["rating"] for r in user_ratings}
-    user_mean = sum(user_rated.values()) / len(user_rated) # μέσος όρος ratings του χρήστη
+    user_mean = sum(user_rated.values()) / len(user_rated) # mean rating of the user, used in the prediction formula
  
     conn = get_db_connection()
  
-    # Βρίσκουμε χρήστες που έχουν βαθμολογήσει τουλάχιστον μία κοινή ταινία
-    movie_ids = list(user_rated.keys()) # φτιάχνουμε λίστα με τα movieId που έχει βαθμολογήσει ο χρήστης π.χ. [1, 32, 10]
+    
+    # We create a list with the movieIds that the user has rated, e.g., [1, 32, 10]
+    movie_ids = list(user_rated.keys()) 
 
-    # χρησιμοποιούμε placeholders για να περάσουμε δυναμικά τα movieId στο query 
-    # π.χ. SELECT * FROM ratings WHERE movieId IN (1, 32,10) -> placeholders = "?, ?, ?"
+    # we use placeholders to pass the movieIds dynamically to the query
+    # e.g., SELECT * FROM ratings WHERE movieId IN (1, 32, 10) -> placeholders = "?, ?, ?"
     placeholders = ",".join("?" * len(movie_ids)) 
  
-    # Ποιοι άλλοι χρήστες έχουν βαθμολογήσει έστω και μία από τις ταινίες που βαθμολόγησε ο δικός μου χρήστης
+    # We find users who have rated at least one movie in common with our user
     neighbor_rows = conn.execute(
         f"SELECT DISTINCT userId FROM ratings WHERE movieId IN ({placeholders})",
         movie_ids
-    ).fetchall() # το αποτέλεσμα είναι μια λίστα από dictionaries με τα userId των γειτόνων π.χ. [{"userId": 5}, {"userId": 12}, ...])
-    neighbor_ids = [row["userId"] for row in neighbor_rows] # απομονώνουμε μόνο τα userId σε μια λίστα π.χ. [5, 12, ...]
+    ).fetchall() # the result is a list of dictionaries with the userIds of the neighbors, e.g., [{"userId": 5}, {"userId": 12}, ...])
+    neighbor_ids = [row["userId"] for row in neighbor_rows] # we extract only the userIds into a list, e.g., [5, 12, ...]
  
     if not neighbor_ids: 
         conn.close()
         return []
  
-    # Φορτώνουμε όλα τα ratings των γειτόνων μαζικά
+    # Load all ratings for the neighbors in bulk
     n_placeholders = ",".join("?" * len(neighbor_ids))
     all_rows = conn.execute(
         f"SELECT userId, movieId, rating FROM ratings WHERE userId IN ({n_placeholders})",
         neighbor_ids
     ).fetchall()
  
-    # Οργανώνουμε: {userId: {movieId: rating}} π.χ. {5: {1: 4.0, 10: 2.0}, 12: {32: 5.0, 10: 3.0}, ...}
+    # Organize: {userId: {movieId: rating}} e.g., {5: {1: 4.0, 10: 2.0}, 12: {32: 5.0, 10: 3.0}, ...}
     neighbor_ratings: dict = {}
     for row in all_rows:
         uid = row["userId"]
@@ -85,36 +87,36 @@ def get_recommendations(user_ratings: list) -> list:
             neighbor_ratings[uid] = {}
         neighbor_ratings[uid][row["movieId"]] = row["rating"]
  
-    # Υπολογίζουμε Pearson για κάθε γείτονα
+    # Compute Pearson correlation for each neighbor
     similarities = []
-    # παίρνουμε τις ταινίες που ταινίες έχει βαθμολογήσει ο δικός μου χρήστης (user_rated) και 
-    # ταυτόχρονα υπάρχουν και στις βαθμολογίες του γείτονα v (v_ratings)
+    # we get the movies that our user has rated (user_rated) and
+    # that also exist in the neighbor's ratings (v_ratings)
     for uid, v_ratings in neighbor_ratings.items():
         common_movies = [mid for mid in user_rated if mid in v_ratings]
-        if len(common_movies) < 2: # Αν έχουμε λιγότερες από 2 κοινές ταινίες, δεν μπορούμε να υπολογίσουμε την συσχέτιση, οπότε το αγνοούμε
+        if len(common_movies) < 2: # If we have fewer than 2 common movies, we can't calculate the correlation, so we skip
             continue
         u_vals = [user_rated[m] for m in common_movies]
         v_vals = [v_ratings[m] for m in common_movies]
         sim = pearson_correlation(u_vals, v_vals)
         if sim > 0:
-            similarities.append((uid, sim)) # λίστα από tuples
+            similarities.append((uid, sim)) # list of tuples
  
-    # TOP_K πιο παρόμοιοι χρήστες
-    similarities.sort(key=lambda x: x[1], reverse=True) # sort by similarity score σε φθίνουσα σειρά
+    # TOP_K most similar users
+    similarities.sort(key=lambda x: x[1], reverse=True) # sort by similarity score in descending order
     top_neighbors = similarities[:TOP_K]
  
     if not top_neighbors:
         conn.close()
         return []
  
-    # Μέσος όρος ratings του κάθε γείτονα (θα χρειαστεί για την πρόβλεψη)
+    # Average ratings of each neighbor (will be used for prediction formula)
     neighbor_means = {}
     for uid, _ in top_neighbors:
         v_r = neighbor_ratings[uid]
         neighbor_means[uid] = sum(v_r.values()) / len(v_r)
  
-    # Candidate movies: βαθμολογήθηκαν από γείτονες αλλά ΟΧΙ από τον χρήστη
-    candidate_movies = set()
+    # Candidate movies: rated by neighbors but not by the user
+    candidate_movies = set() # we use a set to avoid duplicates
     for uid, _ in top_neighbors:
         for mid in neighbor_ratings[uid]:
             if mid not in user_rated:
@@ -124,7 +126,7 @@ def get_recommendations(user_ratings: list) -> list:
         conn.close()
         return []
  
-    # Τύπος εκφώνησης: r̂(u,i) = mean_u + Σ[sim(u,v)*(r(v,i)-mean_v)] / Σ|sim(u,v)|
+    # Prediction formula: r̂(u,i) = mean_u + Σ[sim(u,v)*(r(v,i)-mean_v)] / Σ|sim(u,v)|
     predictions = []
     for mid in candidate_movies:
         numerator = 0.0
@@ -136,10 +138,10 @@ def get_recommendations(user_ratings: list) -> list:
         if denominator == 0:
             continue
         predicted = user_mean + numerator / denominator
-        predicted = max(0.5, min(5.0, predicted)) # περιορίζουμε το rating στο εύρος 0.5 - 5.0 (clamping)
-        predictions.append((mid, round(predicted, 4)))
+        predicted = max(0.5, min(5.0, predicted)) # clamp the predicted rating to the range 0.5 - 5.0
+        predictions.append((mid, round(predicted, 4))) # we round the predicted rating to 4 decimal places for better readability
  
-    # TOP_N ταινίες με τη μεγαλύτερη προβλεπόμενη βαθμολογία
+    # TOP_N movies with the highest predicted ratings
     predictions.sort(key=lambda x: x[1], reverse=True)
     top_predictions = predictions[:TOP_N]
  
@@ -147,8 +149,8 @@ def get_recommendations(user_ratings: list) -> list:
         conn.close()
         return []
  
-    # Ανακτούμε τίτλους και genres από τη βάση
-    top_ids = [p[0] for p in top_predictions] # top_predictions = λίστα από (movieId, predictedRating) άρα top_ids = [movieId1, movieId2, ...]
+    #  Retrieve titles and genres from the database
+    top_ids = [p[0] for p in top_predictions] # top_predictions = list of (movieId, predictedRating) tuples, so top_ids = [movieId1, movieId2, ...]
     id_placeholders = ",".join("?" * len(top_ids))
     movie_rows = conn.execute(
         f"SELECT movieId, title, genres FROM movies WHERE movieId IN ({id_placeholders})",

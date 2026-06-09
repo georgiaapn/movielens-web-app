@@ -13,13 +13,16 @@ from .models import (
 
 app = FastAPI(title="MovieLens API")
 
+# CORS Configuration to allow requests from the frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://127.0.0.1:5500",
+        "http://127.0.0.1:5500", # frontend server address
         "http://localhost:5500",
     ],
-    allow_credentials=False,
+    # browser won't allow credentials (cookies, auth headers, sessionIDs) to be sent in cross-origin requests by default,
+    # and since our API doesn't require them, we can safely set this to False.
+    allow_credentials=False, 
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
@@ -27,20 +30,23 @@ app.add_middleware(
 # --- API Endpoints ---
 
 # Endpoint 1: Search Movies
-@app.get("/movielens/api/movies", response_model=MovieSearchResponse)
-def search_movies(search: str = ""):
-    conn = get_db_connection()
-    cursor = conn.cursor()
+# Users can access this endpoint by sending an HTTP GET request to this path
+@app.get("/movielens/api/movies", response_model=MovieSearchResponse) # like a servlet
+def search_movies(search: str = ""): # query parameter search, default value is an empty string
+    conn = get_db_connection() # Connection
+    cursor = conn.cursor() # create a cursor object to execute SQL queries against the database (Statement/Prepared Statement)
 
     try:
         query = "SELECT movieId, title, genres FROM movies WHERE title LIKE ?"
-        cursor.execute(query, ('%' + search + '%',))
-        movies = cursor.fetchall()
+        cursor.execute(query, ('%' + search + '%',)) 
+        # like means we want to find any title that contains the search string anywhere within it. 
+        movies = cursor.fetchall() # Result set. movies will be a list of rows
         
-        return {"status": "success", "movies": [dict(m) for m in movies]}
+        return {"status": "success", "movies": [dict(m) for m in movies]} 
+        # Each movie will be represented as a dictionary with keys "movieId", "title", and "genres".
         
     except Exception as e:
-        # Σφάλμα Database/Server (500 Internal Server Error)
+        # 500 Internal Server Error
         raise HTTPException(
             status_code=500, 
             detail={
@@ -48,8 +54,9 @@ def search_movies(search: str = ""):
                 "message": f"Failed to search movies due to a server error: {str(e)}"
             }
         )
-    finally:
-        # Εξασφαλίζουμε ότι η σύνδεση με τη βάση θα κλείσει πάντα
+    finally: # The finally block is executed no matter what happens in the try block, whether an exception is raised or not.
+        # Ensures that the database connection is closed regardless of whether an error occurred or not
+        # preventing potential resource leaks
         conn.close()
 
 # Endpoint 2: Get Ratings for a Movie
@@ -59,7 +66,7 @@ def get_movie_ratings(movieId: int):
     cursor = conn.cursor()
 
     try:
-        # Ελέγχουμε αν υπάρχει η ταινία
+        # Check if the movie exists first. If it doesn't, we return a 404 Not Found error.
         cursor.execute("SELECT movieId FROM movies WHERE movieId = ?", (movieId,))
         if not cursor.fetchone():
             raise HTTPException(
@@ -74,11 +81,12 @@ def get_movie_ratings(movieId: int):
         cursor.execute(query, (movieId,))
         ratings = cursor.fetchall()
         return {"status": "success", "ratings": [dict(r) for r in ratings]}
-    except HTTPException:
-        # Αν πετάξαμε εμείς το 404 παραπάνω, το αφήνουμε να περάσει κανονικά
-        raise
+    except HTTPException: 
+        # if this didn't exist, our previously thrown 404 error would be caught by the generic 
+        #Exception handler below, and we would end up returning a 500 Internal Server Error 
+        raise # We re-raise the HTTPException to continue as a 404 error
     except Exception as e:
-        # 2. Σφάλμα Database/Server (500 Internal Server Error)
+        # Database/Server (500 Internal Server Error)
         raise HTTPException(
             status_code=500, 
             detail={
@@ -87,23 +95,21 @@ def get_movie_ratings(movieId: int):
             }
         )
     finally:
-        # Το finally εγγυάται ότι η σύνδεση θα κλείσει Ο,ΤΙ κι αν συμβεί
+        # Ensures that the database connection is closed regardless of whether an error occurred or not
         conn.close()
 
-# Endpoint 3: Add a New Movie
 # Endpoint 3: Add a New Movie
 @app.post("/movielens/api/movies" , response_model=MovieAddResponse)
 def add_movie(movie: MovieCreate):
 
-    # 1. Έλεγχος: Αν ο τίτλος είναι κενός, επιστρέφουμε 400 Bad Request
+    # 1. If title is empty, return 400 Bad Request
     if not movie.title or len(movie.title.strip()) == 0:
         raise HTTPException(
             status_code=400, 
             detail={"status": "fail", "message": "Movie title cannot be empty."}
         )
         
-    # --- ΝΕΟ: Έλεγχος για Genres ---
-    # 2. Έλεγχος: Αν η λίστα με τα genres είναι κενή, επιστρέφουμε 400 Bad Request
+    # 2. If no genres are selected, return 400 Bad Request
     if not movie.genres or len(movie.genres.strip()) == 0:
         raise HTTPException(
             status_code=400, 
@@ -113,18 +119,18 @@ def add_movie(movie: MovieCreate):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Βρίσκουμε πρώτα το επόμενο ασφαλές ID (μεγαλύτερο από το μέγιστο υπάρχον movieId, ώστε να χουμε AUTO_INCREMENT)
+    # Find the next available ID (larger than the maximum existing movieId, to ensure AUTO_INCREMENT)
     cursor.execute("SELECT MAX(movieId) FROM movies")
     max_id = cursor.fetchone()[0] or 0
-    new_id = max_id + 1 # εξασφαλίζουμε unique movieId για το νέο μας movie
+    new_id = max_id + 1 # ensure unique movieId for our new movie
 
     try:
         query = "INSERT INTO movies (movieId, title, genres) VALUES (?, ?, ?)"
         cursor.execute(query, (new_id, movie.title, movie.genres))
-        conn.commit()
+        conn.commit() # commit the transaction to save changes to the database
         return {"status": "success", "movieId": new_id}
     except Exception:
-        conn.rollback()
+        conn.rollback() # If an error occurs, we undo any changes that were made to the database during this transaction
         raise HTTPException(
             status_code=500, 
             detail={"status": "fail", "message": "Failed to add movie due to a server error."}
@@ -145,6 +151,8 @@ def get_movie_recommendations(request: RecommendationRequest):
             }
         )
     try:
+        # We convert the list of RatingInput objects into a list of dictionaries with keys "movieId" and "rating"
+        # the result is something like [{"movieId": 1, "rating": 4.5}, {"movieId": 2, "rating": 3.0}, ...]
         user_ratings_list = [{"movieId": r.movieId, "rating": r.rating} for r in request.ratings]
         recommendations = get_recommendations(user_ratings_list)
         return {"status": "success", "recommendations": recommendations}

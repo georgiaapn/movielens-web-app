@@ -6,7 +6,7 @@ from typing import Optional, List
 # For Endpoint 3: Add a New Movie
 class MovieCreate(BaseModel):
     title: str
-    genres: Optional[str] = ""
+    genres: str
 
 # for Endpoint 4: Get Recommendations
 class RatingInput(BaseModel):
