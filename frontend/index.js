@@ -52,12 +52,12 @@ const Model = {
 
     setRecommendations(recommendations) {
         this.state.recommendedMovies = recommendations;
-        this.state.activeRecIndex = 0;
-        this.state.recommendationCards = [];
+        this.state.activeRecIndex = 0; // reset active carousel item to the first recommendation
+        this.state.recommendationCards = []; // clear old prepared card data before rebuilding the carousel
     },
 
     setRecommendationCards(cards) {
-        this.state.recommendationCards = cards;
+        this.state.recommendationCards = cards; // store the ready recommendation card objects used by the carousel view
     },
 
     // This function tries to find the movie in allMovies first, and if not found, it looks in recommendedMovies.
@@ -77,19 +77,19 @@ const Model = {
     },
 
     getTotalPages() {
-        return Math.ceil(this.state.filteredMovies.length / this.config.moviesPerPage);
+        return Math.ceil(this.state.filteredMovies.length / this.config.moviesPerPage); // calculates total pages
     },
 
     setCurrentPage(page) {
-        this.state.currentPage = page;
+        this.state.currentPage = page; // update the currently selected pagination page
     },
 
     setCurrentSelectedMovieId(movieId) {
-        this.state.currentSelectedMovieId = movieId;
+        this.state.currentSelectedMovieId = movieId; // remember which movie is currently open in the details view
     },
 
     setCurrentRating(rating) {
-        this.state.currentRating = rating;
+        this.state.currentRating = rating; // store the rating currently selected by the user in the details view
     },
 
     getCurrentRating() {
@@ -97,7 +97,7 @@ const Model = {
     },
 
     setActiveRecIndex(index) {
-        this.state.activeRecIndex = index;
+        this.state.activeRecIndex = index; // keep track of which recommendation card is currently active
     },
 
     // fetch movies based on search query API Call
@@ -165,7 +165,7 @@ const Model = {
         });
 
         const data = await response.json();
-        return data;
+        return data; // returns the backend response that contains the personalized recommendations
     },
 
     splitTitleAndYear(title) {
@@ -184,7 +184,7 @@ const Model = {
     },
 
     normalizeRatingValue(avgRating) {
-        return (avgRating === "N/A" || avgRating === "Error") ? 0 : avgRating;
+        return (avgRating === "N/A" || avgRating === "Error") ? 0 : avgRating; // if avgRating is "N/A" or "Error", we treat it as 0 for the star display
     }
 };
 
@@ -253,13 +253,13 @@ const View = {
         this.elements.homeView.classList.add('hidden');
         this.elements.detailsView.classList.add('hidden');
         this.elements.recommendationsView.classList.add('hidden');
-        this.elements[viewName].classList.remove('hidden');
+        this.elements[viewName].classList.remove('hidden'); // show only the requested main view
     },
 
     renderMovieDetails({ titleOnly, yearOnly, formattedGenres }) {
         this.elements.detailTitle.textContent = titleOnly;
         this.elements.detailYear.textContent = yearOnly;
-        this.elements.detailGenres.textContent = formattedGenres;
+        this.elements.detailGenres.textContent = formattedGenres; // fills the details placeholders with the selected movie information
     },
 
     renderMoviesSkeleton(movies) {
@@ -380,7 +380,7 @@ const View = {
     },
 
     refreshRecommendationActiveState(activeRecIndex) {
-        const items = this.elements.recommendationCarousel.querySelectorAll('.carousel-item');
+        const items = this.elements.recommendationCarousel.querySelectorAll('.carousel-item'); // selects all carousel cards
         items.forEach((item, index) => {
             if (index === activeRecIndex) {
                 item.classList.add('active');
@@ -451,11 +451,11 @@ const View = {
     },
 
     scrollToTop() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Smooth scroll to top when changing pages or views
     },
 
     clearRecommendationsCarousel() {
-        this.elements.recommendationCarousel.innerHTML = '';
+        this.elements.recommendationCarousel.innerHTML = ''; // removes previous recommendation cards before rendering new ones
     }
 };
 
@@ -468,7 +468,7 @@ const Controller = {
         try {
             const movies = await Model.fetchMovies(query);
             Model.setMovies(movies);
-            this.renderMoviesPage();
+            this.renderMoviesPage(); // render the first page of the newly fetched movies
         } catch (error) {
             console.error("Error fetching movies:", error);
             View.showMoviesFetchError();
@@ -482,7 +482,7 @@ const Controller = {
 
         for (const movie of movies) {
             const avgRating = await Model.fetchAverageRating(movie.movieId);
-            const ratingValue = Model.normalizeRatingValue(avgRating);
+            const ratingValue = Model.normalizeRatingValue(avgRating); // convert "N/A"/"Error" to 0 so star rendering still works
             View.updateMovieCardRating(movie.movieId, avgRating, ratingValue);
         }
     },
@@ -494,7 +494,7 @@ const Controller = {
         Model.setCurrentSelectedMovieId(movieId);
 
         const savedRatings = Model.getSavedRatings();
-        const savedRating = savedRatings[movieId] || 0;
+        const savedRating = savedRatings[movieId] || 0; // restore previously saved session rating for this movie if it exists
         Model.setCurrentRating(savedRating);
 
         if (savedRating) {
@@ -509,12 +509,12 @@ const Controller = {
             formattedGenres: Model.formatGenres(movie.genres)
         });
         View.showView('detailsView');
-        View.scrollToTop();
+        View.scrollToTop(); // Smooth scroll to top when opening details
     },
 
     returnToHome() {
         View.showView('homeView');
-        View.scrollToTop();
+        View.scrollToTop(); // Smooth scroll to top when returning home
     },
 
     // This function is called when the user hovers over the stars in the details view to give them
@@ -527,7 +527,7 @@ const Controller = {
     selectDetailRating(rating) {
         Model.setCurrentRating(rating);
         View.updateStarsUI(rating);
-        View.elements.detailFeedback.textContent = `You selected ${rating} stars. Ready to rate!`;
+        View.elements.detailFeedback.textContent = `You selected ${rating} stars. Ready to rate!`; // feedback shown immediately after the user clicks a star
     },
 
     // This function is called when the user's mouse leaves the star area in the details view, to reset the star 
@@ -610,7 +610,7 @@ const Controller = {
         ) % Model.state.recommendedMovies.length;
 
         Model.setActiveRecIndex(nextIndex);
-        View.refreshRecommendationActiveState(Model.state.activeRecIndex);
+        View.refreshRecommendationActiveState(Model.state.activeRecIndex); // Redesign to change active card (triggers CSS transition)
         // requestAnimationFrame tells the browser to perform the function right before the next repaint
         requestAnimationFrame(() => View.scrollToActiveRecommendation()); // scroll happens after the DOM has updated with the new active class
     },
@@ -618,20 +618,20 @@ const Controller = {
     goToPage(page) {
         Model.setCurrentPage(page);
         this.renderMoviesPage();
-        View.scrollToTop();
+        View.scrollToTop(); // Smooth scroll to top when changing pages
     },
 
     changePage(step) {
-        this.goToPage(Model.state.currentPage + step);
+        this.goToPage(Model.state.currentPage + step); // used by previous/next pagination buttons
     },
 
     openAddMovieModal() {
-        View.setMenuOpen(false);
+        View.setMenuOpen(false); // Close the floating menu if it's open
         View.openAddMovieModal();
     },
 
     closeAddMovieModal() {
-        View.closeModalSmoothly();
+        View.closeModalSmoothly(); // close the dialog with the fade-out transition
     },
 
     // This function is called when the user submits the "Add Movie" form. 
@@ -704,19 +704,23 @@ const Controller = {
     },
 
     bindMenu() {
+        // Click on Hamburger icon
         View.elements.menuBtn.addEventListener('click', () => {
             const isOpen = document.body.classList.contains("menu-open");
             View.setMenuOpen(!isOpen);
         });
 
+        // Click on the X button
         View.elements.menuClose.addEventListener('click', () => {
             View.setMenuOpen(false);
         });
 
+        // Close if the user clicks on the blurred background
         View.elements.screenBlur.addEventListener('click', () => {
             View.setMenuOpen(false);
         });
 
+        // Close if the user presses the Escape key on the keyboard
         document.addEventListener("keydown", (event) => {
             if (event.key === "Escape") {
                 View.setMenuOpen(false);
@@ -726,11 +730,11 @@ const Controller = {
 
     bindEvents() {
         View.elements.detailRateBtn.addEventListener('click', () => this.submitDetailRating());
-        View.elements.addMovieBtn.addEventListener('click', () => this.openAddMovieModal());
-        View.elements.cancelBtn.addEventListener('click', () => this.closeAddMovieModal());
+        View.elements.addMovieBtn.addEventListener('click', () => this.openAddMovieModal()); // Open modal when clicking "Add a movie" button
+        View.elements.cancelBtn.addEventListener('click', () => this.closeAddMovieModal()); // Close Modal (Cancel)
         View.elements.addMovieForm.addEventListener('submit', (e) => this.submitAddMovieForm(e));
-        View.elements.recommendationsBtn.addEventListener('click', () => this.openRecommendations());
-        View.elements.backdrop.addEventListener('click', () => this.closeAddMovieModal());
+        View.elements.recommendationsBtn.addEventListener('click', () => this.openRecommendations()); // Connect the "Get Recommendations" button
+        View.elements.backdrop.addEventListener('click', () => this.closeAddMovieModal()); // Close modal when clicking on the backdrop
 
         this.bindSearchInput();
         this.bindDetailStars();
@@ -738,7 +742,7 @@ const Controller = {
     },
 
     init() {
-        this.loadMovies();
+        this.loadMovies(); // Initial load from the database
         this.bindEvents();
     }
 };
@@ -747,10 +751,10 @@ const Controller = {
 // GLOBAL HTML HOOKS
 // ==========================================
 
-window.showMovieDetails = (movieId) => Controller.openMovieDetails(movieId);
-window.returnToHome = () => Controller.returnToHome();
-window.goToPage = (page) => Controller.goToPage(page);
-window.changePage = (step) => Controller.changePage(step);
-window.moveCarousel = (step) => Controller.moveCarousel(step);
+window.showMovieDetails = (movieId) => Controller.openMovieDetails(movieId); // allows inline onclick in HTML to open the details view
+window.returnToHome = () => Controller.returnToHome(); // allows the logo/back button HTML hooks to return to the home view
+window.goToPage = (page) => Controller.goToPage(page); // allows numbered pagination buttons in HTML to navigate directly
+window.changePage = (step) => Controller.changePage(step); // allows previous/next pagination buttons in HTML to navigate relatively
+window.moveCarousel = (step) => Controller.moveCarousel(step); // allows carousel arrow buttons in HTML to move recommendations left/right
 
-document.addEventListener('DOMContentLoaded', () => Controller.init());
+document.addEventListener('DOMContentLoaded', () => Controller.init()); // defines initialization logic that runs when the DOM content (HTML) is fully loaded
