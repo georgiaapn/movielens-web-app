@@ -254,12 +254,14 @@ function showMovieDetails(movieId) {
 
     // Εναλλαγή Οθονών
     document.getElementById('homeView').classList.add('hidden');
+    document.getElementById('recommendationsView').classList.add('hidden');
     document.getElementById('detailsView').classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function hideMovieDetails() {
     document.getElementById('detailsView').classList.add('hidden');
+    document.getElementById('recommendationsView').classList.add('hidden');
     document.getElementById('homeView').classList.remove('hidden');
 }
 
@@ -267,6 +269,7 @@ function hideMovieDetails() {
 function returnToHome() {
     // Σιγουρευόμαστε ότι το Home είναι ορατό και το Details κρυφό
     document.getElementById('detailsView').classList.add('hidden');
+    document.getElementById('recommendationsView').classList.add('hidden');
     document.getElementById('homeView').classList.remove('hidden');
     
     // Κάνουμε ομαλό scroll τέρμα πάνω!
@@ -595,8 +598,8 @@ document.querySelector('.floating-action--secondary').addEventListener('click', 
             renderRecommendationCarousel();
             
             // Αλλαγή view μόνο αν υπάρχουν ταινίες
-            // document.getElementById('homeView').classList.add('hidden');
-            // document.getElementById('detailsView').classList.add('hidden');
+            document.getElementById('homeView').classList.add('hidden');
+            document.getElementById('detailsView').classList.add('hidden');
             document.getElementById('recommendationsView').classList.remove('hidden');
             
         } else {
