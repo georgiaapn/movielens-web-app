@@ -515,8 +515,8 @@ body {
 /* FLOATING MENU & BLUR                      */
 /* ========================================= */
 .screen-blur {
-    position: fixed;
-    inset: 0;
+    position: fixed; /* fixed so it doesn't scroll with the page */
+    inset: 0; /* Cover the entire viewport */
     background: rgba(208, 196, 224, 0.42);
     backdrop-filter: blur(3px);
     -webkit-backdrop-filter: blur(3px);
@@ -535,11 +535,11 @@ body.menu-open .screen-blur {
 }
 
 .floating-menu {
-    position: fixed;
-    left: 20px; 
-    top: 30px; 
-    display: flex;
-    flex-direction: column;
+    position: fixed; /* fixed so it stays in place when scrolling */
+    left: 20px; /* leave some space from the left edge */
+    top: 30px; /* leave some space from the top edge, aligned with the header */
+    display: flex; /* buttons in a column one below the other */
+    flex-direction: column; 
     gap: 8px;
     width: 180px;
     z-index: 1010; 

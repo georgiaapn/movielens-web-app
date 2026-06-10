@@ -2,17 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- responsive to different screen sizes -->
     <title>MovieLens</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23171717'/%3E%3Cpath d='M18 16h28a4 4 0 0 1 4 4v24a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V20a4 4 0 0 1 4-4Z' fill='%23f5c518'/%3E%3Ccircle cx='23' cy='23' r='2.2' fill='%23171717'/%3E%3Ccircle cx='23' cy='32' r='2.2' fill='%23171717'/%3E%3Ccircle cx='23' cy='41' r='2.2' fill='%23171717'/%3E%3Ccircle cx='41' cy='23' r='2.2' fill='%23171717'/%3E%3Ccircle cx='41' cy='32' r='2.2' fill='%23171717'/%3E%3Ccircle cx='41' cy='41' r='2.2' fill='%23171717'/%3E%3Cpath d='M28 20v24M36 20v24M18 28h28M18 36h28' stroke='%23171717' stroke-width='2.4'/%3E%3C/svg%3E">
-    <!-- Γραμματοσειρές (Παλιές & Νέες) -->
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="index.css"> <!-- Connection to the CSS file -->
 </head>
 
 <body>
-    <!-- Το θολό υπόβαθρο που εμφανίζεται όταν ανοίγει το μενού -->
+    <!-- Blurry background for the floating menu -->
     <div class="screen-blur" id="screenBlur"></div>
-    <!-- Το αιωρούμενο μενού -->
+    <!-- Floating menu -->
     <div class="floating-menu" id="floatingMenu">
         <button class="floating-action floating-action--primary" type="button">+ Add a movie</button>
         <button class="floating-action floating-action--secondary" type="button">☺ Get Recommendations</button>
