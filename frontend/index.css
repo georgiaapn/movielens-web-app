@@ -175,7 +175,7 @@ body {
 }
 
 .movie-name {
-    font-family: var(--font-handwritten);
+    font-family: var(--font-display);
     font-size: 20px;
     font-style: normal;
     font-weight: 400; /* Ή 700 αν τη θέλεις πιο έντονη */
