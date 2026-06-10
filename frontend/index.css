@@ -191,23 +191,23 @@ body {
 }
 
 .star {
-    color: #c6108f; /* Τα γεμάτα αστέρια είναι φουλ ροζ */
-    font-size: 22px; /* Τα έκανα λίγο πιο μεγάλα για να φαίνεται ωραία το περίγραμμα */
-    -webkit-text-stroke: 1px #c6108f; /* Βάζει το ροζ outline σε ΟΛΑ τα αστέρια */
+    color: #c6108f; /* full starts are pink */
+    font-size: 22px; /* a bit larger so that the outline looks nice */
+    -webkit-text-stroke: 1px #c6108f; /* Puts a pink outline on ALL stars */
 }
 
 .star.empty {
-    color: #d8d8d8; /* Το ανοιχτό γκρι γέμισμα που έχουν τα άδεια αστέρια στο Figma σου */
-    /* Το ροζ περίγραμμα το κρατάει αυτόματα από την κλάση .star */
+    color: #d8d8d8; /* light gray fill for the empty stars */
+    /* The pink outline is automatically retained from the .star class */
 }
 
 .star.half {
-    /* Βάφει το μισό αριστερό ροζ και το μισό δεξί γκρι */
+    /* Half the star is gray and the other half is pink */
     background: linear-gradient(to right, #c6108f 50%, #d8d8d8 50%);
     /*background-clip: text;*/
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    /* Το outline παραμένει κανονικά επειδή κληρονομείται από την κλάση .star */
+    /* The outline is automatically retained from the .star class */
 }
 
 .rating-count {

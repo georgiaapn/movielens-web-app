@@ -13,8 +13,8 @@
     <div class="screen-blur" id="screenBlur"></div>
     <!-- Floating menu -->
     <div class="floating-menu" id="floatingMenu">
-        <button class="floating-action floating-action--primary" type="button">+ Add a movie</button>
-        <button class="floating-action floating-action--secondary" type="button">☺ Get Recommendations</button>
+        <button class="floating-action floating-action--primary" id="addMovieBtn" type="button">+ Add a movie</button>
+        <button class="floating-action floating-action--secondary" id="recommendationsBtn" type="button">☺ Get Recommendations</button>
         <button class="floating-close" id="menuClose" type="button" aria-label="Close menu">×</button>
     </div>
 
@@ -93,7 +93,7 @@
                 </div>
 
                 <!-- Back Button -->
-                <button class="back-button" id="backButton" type="button" aria-label="Go back" onclick="hideMovieDetails()">
+                <button class="back-button" id="backButton" type="button" aria-label="Go back" onclick="returnToHome()">
                     <!-- The new SVG icon for return -->
                     <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter">
                         <polyline points="10 5 3 12 10 19"></polyline>
@@ -199,3 +199,4 @@
 
 </body>
 </html>
+

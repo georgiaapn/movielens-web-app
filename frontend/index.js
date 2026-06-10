@@ -2,144 +2,137 @@ const API_BASE_URL = "http://127.0.0.1:3000/movielens/api";
 const MOVIES_PER_PAGE = 12;
 
 let currentPage = 1;
-let allMovies = []; // Εδώ θα μπαίνουν οι πραγματικές ταινίες από τη βάση
+let allMovies = []; // Here we will store all movies fetched from the backend.
 let filteredMovies = [];
-let recommendedMovies = []; // Για να αποθηκεύουμε τις ταινίες που επιστρέφει ο Pearson
-let activeRecIndex = 0;     // Για να ξέρουμε ποια ταινία είναι στο κέντρο του carousel
+let recommendedMovies = []; // For storing the movies returned by the Pearson correlation
+let activeRecIndex = 0;     // For keeping track of which movie is at the center of the carousel
 
-// 1. Φόρτωση ταινιών από το Backend
+// 1. Load Movies from Backend
 async function fetchMovies(query = "") {
     try {
         const response = await fetch(`${API_BASE_URL}/movies?search=${encodeURIComponent(query)}`);
+        // encodeURIComponent: makes user's search text safe for URL encoding
         const data = await response.json();
         
-        // Προσαρμογή ανάλογα με τη δομή που επιστρέφει το API σου
-        allMovies = Array.isArray(data) ? data : (data.movies || []);
-        filteredMovies = [...allMovies];
+        allMovies = data.movies || []; // store data.movies or an empty array if it's undefined
+        filteredMovies = [...allMovies]; // new array reference, with the same content as allMovies
         
-        currentPage = 1;
+        currentPage = 1; // reset to first page on new search
         renderMovies();
         renderPagination();
     } catch (error) {
         console.error("Error fetching movies:", error);
+        // innerHTML: gets element with id moviesGrid and sets its content to a message about the connection failure
         document.getElementById('moviesGrid').innerHTML = 
             '<p style="color: white; padding: 20px;">Failed to connect to Backend. Please ensure that the uvicorn server is running.</p>';
     }
 }
 
-// 2. Δημιουργία HTML για την κάρτα (με τα σωστά πεδία της βάσης)
-function createMovieCard(movie) {
-    // Επειδή η βάση δεν έχει έτοιμο μέσο όρο αστεριών στο search, 
-    // βάζουμε ένα τυχαίο για το UI που παράγει είτε δεκαδικούς με .5 είτε εντελώς ακέραιους μεταξύ 1.0 και 5.0 για να φαίνεται πιο ρεαλιστικό.
-    const displayRating = (Math.floor(Math.random() * 5) + 0.5).toFixed(1);
- 
-
-    return `
-        <div class="movie-card" style="cursor: pointer;" onclick="showMovieDetails(${movie.movieId})">
-            <div class="movie-name">${movie.title}</div>
-            <div class="movie-info">
-                <div class="stars">${createStarRating(displayRating)}</div>
-                <span class="rating-count">${displayRating}</span>
-            </div>
-        </div>
-    `;
-}
-
-// Βοηθητική συνάρτηση για τα αστέρια
+// Helper function to create star rating HTML string based on a numeric rating (e.g., 4.5)
 function createStarRating(rating) {
     let stars = '';
-    const numRating = parseFloat(rating);
-    const fullStars = Math.floor(numRating);
+    const numRating = parseFloat(rating); // Convert to number in case it's a string
+    const fullStars = Math.floor(numRating); // Number of fully filled stars
     
-    // Ελέγχουμε αν το δεκαδικό μέρος είναι 0.5
+    // boolean variable to check if the decimal part is 0.5
     const hasHalfStar = (numRating % 1) === 0.5; 
 
     for (let i = 0; i < 5; i++) {
         if (i < fullStars) {
-            // Πλήρως γεμάτο αστέρι
+            // Fully filled star
             stars += `<span class="star">★</span>`; 
         } else if (i === fullStars && hasHalfStar) {
-            // Μισογεμάτο αστέρι
+            // Half-filled star
             stars += `<span class="star half">★</span>`; 
         } else {
-            // Άδειο αστέρι
+            // Empty star
             stars += `<span class="star empty">★</span>`; 
         }
     }
     return stars;
 }
 
-// --- ΝΕΑ ΣΥΝΑΡΤΗΣΗ: Υπολογισμός Average Rating από το API ---
+// Calculates average rating for a given movieId by fetching all ratings and computing the average
 async function fetchAverageRating(movieId) {
     try {
         const response = await fetch(`${API_BASE_URL}/ratings/${movieId}`); //
         const data = await response.json();
 
         if (data.status === "success" && data.ratings.length > 0) {
-            // Υπολογισμός μέσου όρου
-            const sum = data.ratings.reduce((acc, curr) => acc + curr.rating, 0);
+            // Calculate average rating
+            let sum = 0;
+            for (const curr of data.ratings) {
+                sum += curr.rating;
+            }
             const avg = sum / data.ratings.length;
-            return avg.toFixed(1); // Επιστρέφει π.χ. "4.2"
+            return avg.toFixed(1); // Returns result with one decimal place, e.g., "4.5"
         }
-        return "N/A"; // Αν δεν υπάρχουν βαθμολογίες
+        return "N/A"; // If no ratings exist
     } catch (error) {
         console.error(`Error fetching ratings for movie ${movieId}:`, error);
         return "Error";
     }
 }
 
-// --- Τροποποιημένη renderMovies ---
-function renderMovies() {
-    const movieGrid = document.getElementById('moviesGrid');
-    if (!movieGrid) return;
-    
-    movieGrid.innerHTML = ''; 
 
-    // Παίρνουμε μόνο τις ταινίες της τρέχουσας σελίδας
+function renderMovies() {
+    const movieGrid = document.getElementById('moviesGrid'); // finds <div id="moviesGrid">
+    if (!movieGrid) return; // safety check to ensure the element exists before trying to manipulate it
+    
+    movieGrid.innerHTML = ''; // Clear previous movies before rendering new ones
+
+    // Getting current page movies based on pagination logic
+    // for example, if currentPage = 1 -> movies 0 to 11
     const startIndex = (currentPage - 1) * MOVIES_PER_PAGE;
+    // slice() creates the subset of movies to render based on the current page and MOVIES_PER_PAGE
     const moviesToRender = filteredMovies.slice(startIndex, startIndex + MOVIES_PER_PAGE);
 
+    // for each movie in moviesToRender, we create a card and append it to the movieGrid
     moviesToRender.forEach(async (movie) => {
         const movieCard = document.createElement('div');
         movieCard.className = 'movie-card';
-        movieCard.style.cursor = 'pointer';
-        // Προσθήκη του click event για να ανοίγει το details view
+        movieCard.style.cursor = 'pointer'; // make it clear that the card is clickable
+        //  click event to open details view
         movieCard.onclick = () => showMovieDetails(movie.movieId);
         
-        // Χρησιμοποιούμε την αρχική σου δομή HTML
+        // Fill the inside of the card with the movie title and a placeholder for the rating
+        // (which will be updated after fetching)
             movieCard.innerHTML = `
                 <div class="movie-name">${movie.title}</div>
                 <div class="movie-info">
                     <div class="stars" id="stars-${movie.movieId}">
                         ${createStarRating(0)}
                     </div>
-                    <span class="rating-count" id="rating-${movie.movieId}">...</span>
+                    <span class="rating-count" id="rating-${movie.movieId}">...</span> 
                 </div>
             `;
         
         movieGrid.appendChild(movieCard);
 
-        // Ανάκτηση πραγματικού rating
+        // Retrieve actual rating
         const avgRating = await fetchAverageRating(movie.movieId);
         
-        // Ενημέρωση κειμένου βαθμολογίας
+        // Update rating text
+        // getElementById: finds the element with id rating-{movieId} and updates its text content to the average rating
         const ratingElement = document.getElementById(`rating-${movie.movieId}`);
         if (ratingElement) {
             ratingElement.textContent = avgRating;
         }
 
-        // Ενημέρωση αστεριών (χρησιμοποιώντας τη συνάρτηση που ήδη έχεις)
+        // Update star ratings (using the function we already have)
         const starsElement = document.getElementById(`stars-${movie.movieId}`);
             if (starsElement) {
+                // if avgRating is "N/A" or "Error", we treat it as 0 for the star display,
+                //  otherwise we use the actual average rating
                 const ratingValue = (avgRating === "N/A" || avgRating === "Error") ? 0 : avgRating;
                 starsElement.innerHTML = createStarRating(ratingValue);
             }
     });
 }
 
-// 4. Pagination & Navigation
+// Pagination & Navigation
 function renderPagination() {
-    const totalPages = Math.ceil(filteredMovies.length / MOVIES_PER_PAGE);
+    const totalPages = Math.ceil(filteredMovies.length / MOVIES_PER_PAGE); // calculates total pages 
     const pagination = document.getElementById('pagination');
     
     if (totalPages <= 1) {
@@ -147,30 +140,33 @@ function renderPagination() {
         return;
     }
 
+    // previous page button. If we are on the first page, it is disabled
     let html = `
         <button class="pagination-btn" onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>
             ❮
         </button>
     `;
 
-    // Λογική για εμφάνιση σελίδων στυλ: 1 2 3 ... 99
-    const range = 2; // Πόσες σελίδες γύρω από την τρέχουσα
+    // Logic for displaying pages: 1 2 3 ... 99
+    const range = 2; // show 2 pages before and after the current page
     
     for (let i = 1; i <= totalPages; i++) {
-        // Εμφανίζουμε την πρώτη, την τελευταία, και τις σελίδες γύρω από την τρέχουσα
+        // We display the first, last, and pages around the current page (its range)
         if (i === 1 || i === totalPages || (i >= currentPage - range && i <= currentPage + range)) {
+            // if i is the current page, we add the 'active' class to highlight it
             html += `
                 <button class="pagination-number ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">
                     ${i}
                 </button>
             `;
         } 
-        // Προσθήκη αποσιωπητικών (...) αν υπάρχει μεγάλο κενό
+        // Add ellipsis (...) if there's a large gap between pages
         else if (i === currentPage - range - 1 || i === currentPage + range + 1) {
             html += `<span class="pagination-ellipsis">...</span>`;
         }
     }
 
+    // next page button. If we are on the last page, it is disabled
     html += `
         <button class="pagination-btn" onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>
             ❯
@@ -179,37 +175,37 @@ function renderPagination() {
 
     pagination.innerHTML = html;
 }
+
 function goToPage(page) {
     currentPage = page;
     renderMovies();
     renderPagination();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Smooth scroll to top when changing pages
 }
 
 function changePage(step) {
     goToPage(currentPage + step);
 }
 
-// 5. Search & Events
+// defines initialization logic that runs when the DOM content (HTML) is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Αρχική φόρτωση από τη βάση
+    // Initial load from the database
     fetchMovies();
 
     const searchInput = document.getElementById('searchInput');
     let timeout = null;
 
+    // every time search input changes (user types, deletes etc.)
     searchInput.addEventListener('input', (e) => {
-        // Debounce: περιμένουμε λίγο πριν κάνουμε το αίτημα στο API
-        clearTimeout(timeout);
+        // Debounce: we wait before making the API call
+        clearTimeout(timeout); // if the user types again before 300ms, we reset the timer and wait again
+        // start a 300ms timer
+        // if it completes without interruption, we call fetchMovies with the current value of the search input
         timeout = setTimeout(() => {
-            fetchMovies(e.target.value);
+            fetchMovies(e.target.value); // e is the event object, e.target is the input element, e.target.value is the current text in the search box
         }, 300);
     });
 });
-
-function handleRate(movieId) {
-    alert(`Rating for Movie ID: ${movieId}`);
-}
 
 // ==========================================
 // DETAILS VIEW LOGIC
@@ -223,75 +219,76 @@ function showMovieDetails(movieId) {
     
     currentSelectedMovieId = movieId;
 
-    // --- ΕΞΥΠΝΗ ΑΝΑΚΤΗΣΗ ΒΑΘΜΟΛΟΓΙΑΣ ---
-    // Κοιτάμε αν υπάρχει ήδη βαθμολογία στο session για το συγκεκριμένο ID
+    // checks if the user has already rated this movie in the current session by looking into sessionStorage
     const savedRatings = JSON.parse(sessionStorage.getItem('movieRatings')) || {};
     
     if (savedRatings[movieId]) {
-        // Αν υπάρχει, την επαναφέρουμε!
+        // If found, we display it!
         currentRating = savedRatings[movieId];
         document.getElementById('detailFeedback').textContent = `You previously rated this ${currentRating}/5.`;
     } else {
-        // Αν όχι, ξεκινάμε από το μηδέν
+        // If not, we start from zero
         currentRating = 0; 
         document.getElementById('detailFeedback').textContent = "Select a rating to continue.";
     }
     
-    // Ενημερώνουμε τα αστέρια στην οθόνη βάσει του currentRating
+    // Update the stars UI based on the current rating
     updateStarsUI();
 
-    // Διαχωρισμός Τίτλου και Έτους (Regex για να βρει την παρένθεση)
-    const match = movie.title.match(/(.+?)\s*(\(\d{4}\))?$/);
+    // Title and Year Separation (Regex to find the parentheses)
+    // For example, if the title is "The Matrix (1999)", it will separate "The Matrix" and "(1999)"
+    // match[0] = full title, match[1] = title without year, match[2] = year in parentheses (if exists)
+    const match = movie.title.match(/(.+?)\s*(\(\d{4}\))?$/); 
     const titleOnly = match ? match[1] : movie.title;
     const yearOnly = (match && match[2]) ? match[2] : "";
 
-    // Αλλαγή των genres (από Action|Comedy σε ACTION • COMEDY)
+    // Genre Formatting (from Action|Comedy to ACTION • COMEDY)
     const formattedGenres = movie.genres ? movie.genres.split('|').join(' • ') : "UNKNOWN";
 
+    // update HTML of details view with the movie information (fills placeholders with actual data)
     document.getElementById('detailTitle').textContent = titleOnly;
     document.getElementById('detailYear').textContent = yearOnly;
     document.getElementById('detailGenres').textContent = formattedGenres;
 
-    // Εναλλαγή Οθονών
-    document.getElementById('homeView').classList.add('hidden');
-    document.getElementById('recommendationsView').classList.add('hidden');
-    document.getElementById('detailsView').classList.remove('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // screen transition to details view
+    document.getElementById('homeView').classList.add('hidden'); // hide home view
+    document.getElementById('recommendationsView').classList.add('hidden'); // hide recommendations view
+    document.getElementById('detailsView').classList.remove('hidden'); // show details view
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Smooth scroll to top when opening details
 }
 
-function hideMovieDetails() {
-    document.getElementById('detailsView').classList.add('hidden');
-    document.getElementById('recommendationsView').classList.add('hidden');
-    document.getElementById('homeView').classList.remove('hidden');
-}
-
-// Επιστροφή στην αρχική από το λογότυπο
+// Return to Home Page
 function returnToHome() {
-    // Σιγουρευόμαστε ότι το Home είναι ορατό και το Details κρυφό
     document.getElementById('detailsView').classList.add('hidden');
     document.getElementById('recommendationsView').classList.add('hidden');
     document.getElementById('homeView').classList.remove('hidden');
-    
-    // Κάνουμε ομαλό scroll τέρμα πάνω!
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Smooth scroll to top when returning home
 }
 
-// Λογική για τα Αστέρια στο δεξί panel (Μισά & Ολόκληρα)
-const detailStars = document.querySelectorAll('.details-star');
+// Logic for interactive star rating in details view
+const detailStars = document.querySelectorAll('.details-star'); // selects all elements with class 'details-star' (the 5 stars in the details view)
 const detailFeedback = document.getElementById('detailFeedback');
 const starContainer = document.getElementById('detailRatingStars');
 
+// star is the element itself, index is its position (0 to 4)
 detailStars.forEach((star, index) => {
-    // Συνάρτηση που βρίσκει αν το ποντίκι είναι στο αριστερό (< 50%) ή δεξί μισό
+    // helper function that determines mouse position (left half 50% or right half) for half-star support
     const calculateRating = (e) => {
-        const isHalf = e.offsetX < e.target.offsetWidth / 2;
+        // if cursor offset is less than half the star's width => 
+        // mouse is in the left half of the star => 
+        // it's a half star
+        const isHalf = e.offsetX < e.target.offsetWidth / 2; 
         return index + (isHalf ? 0.5 : 1);
     };
 
+    // event listener for hover
+    // while mouse is moving over a star, calculate the rating based on the mouse position and update the UI 
+    // to show the potential rating
     star.addEventListener('mousemove', (e) => {
         updateStarsUI(calculateRating(e));
     });
 
+    // event listener for click
     star.addEventListener('click', (e) => {
         currentRating = calculateRating(e);
         updateStarsUI(currentRating);
@@ -299,6 +296,7 @@ detailStars.forEach((star, index) => {
     });
 });
 
+// when the mouse leaves the star container, we want to reset the stars
 if (starContainer) {
     starContainer.addEventListener('mouseleave', () => {
         updateStarsUI(currentRating);
@@ -307,15 +305,15 @@ if (starContainer) {
 
 function updateStarsUI(ratingToDisplay = currentRating) {
     detailStars.forEach((star, index) => {
-        // Ξεκινάμε κάνοντας το αστέρι "άδειο" και αφαιρώντας το "μισό"
+        // Reset all stars to empty first
         star.classList.add('empty');
         star.classList.remove('half');
         
         if (ratingToDisplay >= index + 1) {
-            // Ολόκληρο αστέρι (Αφαιρούμε το empty, μένει το φουλ ροζ της .star)
+            // fully filled star, we remove the empty class (full pink form .star remains)
             star.classList.remove('empty');
         } else if (ratingToDisplay > index) {
-            // Μισό αστέρι (Αφαιρούμε το empty, προσθέτουμε το half)
+            // half star, we remove the empty class and add the half class (which has the gradient)
             star.classList.remove('empty');
             star.classList.add('half');
         }
@@ -326,12 +324,13 @@ async function renderRecommendationCarousel() {
     const carousel = document.getElementById('recommendationCarousel');
     if (!carousel) return;
 
-    if (carousel.children.length === 0) {
-        // Χρησιμοποιούμε Promise.all για να φέρουμε όλα τα ratings ταυτόχρονα
+    if (carousel.children.length === 0) { // only fetch ratings and create cards if carousel is empty (first time rendering)
+        //  Promise.all to fetch all ratings in parallel and wait for all of them to complete before rendering the carousel
+        // cardsHTML will be an array of HTML strings
         const cardsHTML = await Promise.all(recommendedMovies.map(async (movie, index) => {
             const avgRating = await fetchAverageRating(movie.movieId);
             const ratingValue = (avgRating === "N/A" || avgRating === "Error") ? 0 : avgRating;
-            const starsHTML = createStarRating(avgRating);
+            const starsHTML = createStarRating(ratingValue);
             
             return `
                 <li class="carousel-item movie-card" id="rec-item-${index}" 
@@ -347,8 +346,8 @@ async function renderRecommendationCarousel() {
         carousel.innerHTML = cardsHTML.join('');
     }
 
-    // Ενημέρωση ενεργής κλάσης
-    const items = carousel.querySelectorAll('.carousel-item');
+    // Update active card
+    const items = carousel.querySelectorAll('.carousel-item'); // selects all carousel cards
     items.forEach((item, index) => {
         if (index === activeRecIndex) {
             item.classList.add('active');
@@ -357,7 +356,8 @@ async function renderRecommendationCarousel() {
         }
     });
     
-    requestAnimationFrame(scrollToActive);
+    // requestAnimationFrame tells the browser to perform the function right before the next repaint
+    requestAnimationFrame(scrollToActive); // scroll happens after the DOM has updated with the new active class
 }
 
 function setActiveRec(index) {
@@ -368,13 +368,13 @@ function setActiveRec(index) {
 function moveCarousel(step) {
     if (recommendedMovies.length === 0) return;
 
-    // Υπολογισμός νέου index
+    // calculate the new active index 
     activeRecIndex = (activeRecIndex + step + recommendedMovies.length) % recommendedMovies.length;
     
-    // Επανασχεδιασμός για να αλλάξει η κλάση .active (πυροδοτεί το CSS transition)
+    // Redesign to change active card (triggers CSS transition)
     renderRecommendationCarousel();
     
-    // Smooth κύλιση προς το νέο κέντρο
+    // Smooth scroll to the new active card
     setTimeout(scrollToActive, 10);
 }
 
@@ -382,36 +382,35 @@ function scrollToActive() {
     const activeItem = document.querySelector(".carousel-item.active");
     if (activeItem) {
         activeItem.scrollIntoView({ 
-            behavior: "smooth", // Εξασφαλίζει smooth κίνηση
+            behavior: "smooth", // smooth scroll animation
             block: "nearest", 
-            inline: "center"   // Φέρνει το στοιχείο ακριβώς στη ΜΕΣΗ
+            inline: "center"   // centers the active item
         });
     }
 }
 
 
-// Υποβολή Βαθμολογίας
+// Submit Rating Button Logic
 document.getElementById('detailRateBtn').addEventListener('click', () => {
     if (currentRating === 0) {
         detailFeedback.textContent = "Please select a rating first.";
         return;
     }
     
-    // Αποθήκευση ΜΟΝΟ για το τρέχον session ---
-    // 1. Παίρνουμε τις υπάρχουσες βαθμολογίες του session
+    // Save only for the current session 
+    // 1. Get the current session's saved ratings from sessionStorage
     const savedRatings = JSON.parse(sessionStorage.getItem('movieRatings')) || {};
     
-    // 2. Προσθέτουμε/Ενημερώνουμε τη βαθμολογία για τη συγκεκριμένη ταινία
+    // 2. Updating the rating for the current movie
     savedRatings[currentSelectedMovieId] = currentRating;
     
-    // 3. Αποθηκεύουμε ξανά στο sessionStorage
+    // 3. Save the updated ratings back to sessionStorage
     sessionStorage.setItem('movieRatings', JSON.stringify(savedRatings));
-    // -------------------------------------------------------------
 
-    // Διαβάζουμε τον τίτλο της ταινίας κατευθείαν από το HTML στοιχείο
+    // Get the movie title from the details view to include in the success message
     const movieTitle = document.getElementById('detailTitle').textContent;
     
-    // Εμφανίζουμε το μήνυμα επιτυχίας με τον τίτλο
+    // Display success message with the selected rating and movie title
     detailFeedback.textContent = `Success! Rated ${currentRating}/5 for movie: ${movieTitle}`;
 
 });
@@ -423,65 +422,63 @@ const menuBtn = document.getElementById('menuBtn');
 const floatingMenu = document.getElementById('floatingMenu');
 const menuClose = document.getElementById('menuClose');
 
-// Συνάρτηση που ανοίγει/κλείνει το μενού
 function setMenuOpen(open) {
-    // Κρατάμε ΜΟΝΟ αυτή τη γραμμή. Το CSS θα αναλάβει πλέον όλη τη μαγεία της εμφάνισης!
+    // We toggle the "menu-open" class on the body element(<body class="menu-open"> instead of <body>) 
+    // which triggers the CSS to show or hide the menu and backdrop (body.menu-open .floating-menu { ... })
     document.body.classList.toggle("menu-open", open);
 }
 
-// Κλικ στο Hamburger icon
+// Click on Hamburger icon
 menuBtn.addEventListener('click', () => {
-    const isOpen = document.body.classList.contains("menu-open");
-    setMenuOpen(!isOpen);
+    const isOpen = document.body.classList.contains("menu-open"); // checks if the menu is currently open 
+    setMenuOpen(!isOpen); // if it's open, we close it; if it's closed, we open it
 });
 
-// Κλικ στο κουμπί X
+// Click on the X button
 menuClose.addEventListener('click', () => {
     setMenuOpen(false);
 });
 
-// Κλείσιμο αν ο χρήστης πατήσει το πλήκτρο Escape στο πληκτρολόγιο
+// Close if the user presses the Escape key on the keyboard
 document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
         setMenuOpen(false);
     }
 });
 
-// Κλείσιμο αν ο χρήστης κάνει κλικ στο θολό υπόβαθρο
+// Close if the user clicks on the blurred background
 document.getElementById('screenBlur').addEventListener('click', () => {
     setMenuOpen(false);
 });
 
 // --- Modal Elements ---
-const addMovieBtn = Array.from(document.querySelectorAll('.floating-menu button')).find(btn => btn.textContent.includes('+ Add a movie'));
+const addMovieBtn = document.getElementById('addMovieBtn');
 const addMovieModal = document.getElementById('addMovieModal');
 const backdrop = document.getElementById('backdrop');
 const cancelBtn = document.getElementById('cancelBtn');
 const addMovieForm = document.getElementById('addMovieForm');
 
-// --- Νέα Συνάρτηση για τα μηνύματα (Toast) ---
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toastMessage');
 
     toastMessage.textContent = message;
     
-    // Αφαιρούμε παλιές κλάσεις και βάζουμε τις νέες
+    // Remove old classes and add the new type class (success or error)
     toast.classList.remove('success', 'error', 'show');
     toast.classList.add(type);
     
-    // Μικρή καθυστέρηση για να εφαρμόσει ο browser την αλλαγή
+    // Small delay for the browser to apply the change
     setTimeout(() => {
         toast.classList.add('show');
     }, 10);
 
-    // Κρύβουμε το μήνυμα αυτόματα μετά από 3.5 δευτερόλεπτα
+    // Hide the message automatically after 3.5 seconds
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3500);
 }
 
-// --- Συνάρτηση για απαλό κλείσιμο του Modal ---
 function closeModalSmoothly() {
     addMovieModal.classList.add('is-closing');
     backdrop.classList.add('is-closing');
@@ -491,32 +488,32 @@ function closeModalSmoothly() {
         backdrop.hidden = true;
         addMovieModal.classList.remove('is-closing');
         backdrop.classList.remove('is-closing');
-    }, 300); // 300ms όση και η διάρκεια του CSS animation
+    }, 300); // 300ms matches the CSS transition duration for a smooth fade-out effect
 }
 
-// Άνοιγμα Modal
+// Open modal when clicking "Add a movie" button
 addMovieBtn.addEventListener('click', () => {
-    setMenuOpen(false); 
+    setMenuOpen(false); // Close the floating menu if it's open
     backdrop.hidden = false;
     addMovieModal.showModal();
 });
 
-// Κλείσιμο Modal (Cancel)
+// Close Modal (Cancel)
 cancelBtn.addEventListener('click', () => {
     closeModalSmoothly();
 });
 
-// Υποβολή Φόρμας
+// Submit Form (Save)
 addMovieForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // prevents the default form submission behavior (which would cause a page reload)
     
-    const title = document.getElementById('movieTitleInput').value;
-    const genreSelect = document.getElementById('movieGenreSelect');
+    const title = document.getElementById('movieTitleInput').value; // user's text
+    const genreSelect = document.getElementById('movieGenreSelect'); // multi select element for genres
     
+    // gets selected genres in the format "Action|Comedy|Drama" which is expected by the backend
     const selectedGenres = Array.from(genreSelect.selectedOptions)
                                 .map(option => option.value)
-                                .join('|');
-
+                                .join('|'); 
     try {
         const response = await fetch(`${API_BASE_URL}/movies`, {
             method: 'POST',
@@ -539,43 +536,48 @@ addMovieForm.addEventListener('submit', async (e) => {
             );
         }
 
+        // If successful, we optimistically add the new movie to our local list and re-render the movies grid
         const newMovie = {
             movieId: result.movieId,
             title: title,
             genres: selectedGenres
         };
 
-        allMovies.unshift(newMovie);
+        allMovies.unshift(newMovie); // add the new movie to the beginning of the allMovies array
         filteredMovies = [...allMovies];
         
         renderMovies();
-        addMovieForm.reset();
+        addMovieForm.reset(); // reset the form fields after successful submission
         
-        // 1. Κλείνουμε το modal απαλά
         closeModalSmoothly(); 
-        
-        // 2. Εμφανίζουμε το κομψό μήνυμα επιτυχίας!
+
         showToast(`Movie "${title}" saved successfully!`, 'success');
 
     } catch (error) {
-        console.error("Σφάλμα κατά την αποθήκευση:", error);
+        console.error("Failed to save movie:", error);
         
-        // Σε περίπτωση αποτυχίας, το modal μπορεί να μείνει ανοιχτό και να βγάλει το κόκκινο μήνυμα
+        // In case of failure, the modal can remain open and display the error message
         showToast(`Could not save the movie. ${error.message}`, 'error');
     }
 });
 
-// Σύνδεση του κουμπιού Get Recommendations
-document.querySelector('.floating-action--secondary').addEventListener('click', async () => {
-    setMenuOpen(false);
+// Connect the "Get Recommendations" button
+const recommendationsBtn = document.getElementById('recommendationsBtn');
+
+recommendationsBtn.addEventListener('click', async () => {
+    setMenuOpen(false); // Close the floating menu if it's open
     
     const savedRatings = JSON.parse(sessionStorage.getItem('movieRatings')) || {};
     
+    // If there are no ratings, we show a message and don't call the backend
     if (Object.keys(savedRatings).length === 0) {
         showToast("Please rate some movies first!", "error");
         return;
     }
 
+    // turns savedRatings from an object like { "1": 4.5, "2": 3.0 }
+    //  to an array of objects like [ { movieId: 1, rating: 4.5 }, { movieId: 2, rating: 3.0 } ]
+    // just like the backend expects it for the /recommendations endpoint
     const ratingsArray = Object.entries(savedRatings).map(([id, rating]) => ({
         movieId: parseInt(id),
         rating: rating
@@ -597,13 +599,13 @@ document.querySelector('.floating-action--secondary').addEventListener('click', 
             document.getElementById('recommendationCarousel').innerHTML = '';
             renderRecommendationCarousel();
             
-            // Αλλαγή view μόνο αν υπάρχουν ταινίες
+            // Change view only if there are recommendations
             document.getElementById('homeView').classList.add('hidden');
             document.getElementById('detailsView').classList.add('hidden');
             document.getElementById('recommendationsView').classList.remove('hidden');
             
         } else {
-            // Αν η λίστα είναι κενή, εμφανίζουμε ένα φιλικό μήνυμα
+            // If list is empty, display a user-friendly message
             showToast("Help us get to know you better! Rate a few more movies and we’ll find your perfect picks.", "error");
         }
     } catch (error) {
@@ -611,7 +613,7 @@ document.querySelector('.floating-action--secondary').addEventListener('click', 
     }
 });
 
-// Κλείσιμο αν πατηθεί το backdrop
+// Close modal when clicking on the backdrop
 backdrop.addEventListener('click', () => {
     closeModalSmoothly();
 });
