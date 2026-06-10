@@ -46,10 +46,20 @@ def init_database():
 
     # Load movies.csv
     try:
-        with open(DATA_DIR / "movies.csv", 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
+        with open(DATA_DIR / "movies.csv", 'r', encoding='utf-8') as f: # open file in read mode with UTF-8 encoding
+            reader = csv.DictReader(f) 
+            # if csv has header movieId,title,genres every row will be a dict 
+            # like {"movieId": "1", "title": "Toy Story (1995)", "genres": "Adventure|Animation|Children|Comedy|Fantasy"}
             movies_data = [(row['movieId'], row['title'], row['genres']) for row in reader]
+            # movies_data will be a list of tuples like 
+            # [
+            # ('1', 'Toy Story (1995)', 'Adventure|Animation|Children|Comedy|Fantasy'),
+            # ('2', 'Jumanji (1995)', 'Adventure|Children|Fantasy'),
+            # ...
+            # ]
             cursor.executemany('INSERT OR IGNORE INTO movies (movieId, title, genres) VALUES (?, ?, ?)', movies_data)
+            # execute the query for each tuple in movies_data
+            # or ignore if movieId already exists (to avoid duplicates)
         print("The 'movies' table has been populated!")
     except FileNotFoundError:
         print("File not found: movies.csv")
