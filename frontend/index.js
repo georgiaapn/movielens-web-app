@@ -1,3 +1,6 @@
+// ==========================================
+// CONFIG & UI STATE
+// ==========================================
 const API_BASE_URL = "http://127.0.0.1:3000/movielens/api";
 const MOVIES_PER_PAGE = 12;
 
@@ -6,8 +9,59 @@ let allMovies = []; // Here we will store all movies fetched from the backend.
 let filteredMovies = [];
 let recommendedMovies = []; // For storing the movies returned by the Pearson correlation
 let activeRecIndex = 0;     // For keeping track of which movie is at the center of the carousel
+let currentSelectedMovieId = null;
+let currentRating = 0;
 
-// 1. Load Movies from Backend
+// ==========================================
+// DOM REFERENCES
+// ==========================================
+
+const searchInput = document.getElementById('searchInput');
+const detailRateBtn = document.getElementById('detailRateBtn');
+const detailStars = document.querySelectorAll('.details-star');
+const detailFeedback = document.getElementById('detailFeedback');
+const starContainer = document.getElementById('detailRatingStars');
+
+const menuBtn = document.getElementById('menuBtn');
+const floatingMenu = document.getElementById('floatingMenu');
+const menuClose = document.getElementById('menuClose');
+const screenBlur = document.getElementById('screenBlur');
+
+const addMovieBtn = document.getElementById('addMovieBtn');
+const recommendationsBtn = document.getElementById('recommendationsBtn');
+const addMovieModal = document.getElementById('addMovieModal');
+const backdrop = document.getElementById('backdrop');
+const cancelBtn = document.getElementById('cancelBtn');
+const addMovieForm = document.getElementById('addMovieForm');
+
+// ==========================================
+// SESSION & DATA HELPERS
+// ==========================================
+
+function getSavedRatings() {
+    return JSON.parse(sessionStorage.getItem('movieRatings')) || {};
+}
+
+function saveRatingForSession(movieId, rating) {
+    const savedRatings = getSavedRatings(); // 1. Get the current session's saved ratings from sessionStorage
+    savedRatings[movieId] = rating; // 2. Updating the rating for the current movie
+    sessionStorage.setItem('movieRatings', JSON.stringify(savedRatings)); // 3. Save the updated ratings back to sessionStorage
+}
+
+function buildRatingsArray(savedRatings) {
+    // turns savedRatings from an object like { "1": 4.5, "2": 3.0 }
+    //  to an array of objects like [ { movieId: 1, rating: 4.5 }, { movieId: 2, rating: 3.0 } ]
+    // just like the backend expects it for the /recommendations endpoint
+    return Object.entries(savedRatings).map(([id, rating]) => ({
+        movieId: parseInt(id, 10),
+        rating: rating
+    }));
+}
+
+// ==========================================
+// API FUNCTIONS
+// ==========================================
+
 async function fetchMovies(query = "") {
     try {
         const response = await fetch(`${API_BASE_URL}/movies?search=${encodeURIComponent(query)}`);
@@ -27,6 +81,32 @@ async function fetchMovies(query = "") {
             '<p style="color: white; padding: 20px;">Failed to connect to Backend. Please ensure that the uvicorn server is running.</p>';
     }
 }
+
+// Calculates average rating for a given movieId by fetching all ratings and computing the average
+async function fetchAverageRating(movieId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/ratings/${movieId}`); //
+        const data = await response.json();
+
+        if (data.status === "success" && data.ratings.length > 0) {
+            // Calculate average rating
+            let sum = 0;
+            for (const curr of data.ratings) {
+                sum += curr.rating;
+            }
+            const avg = sum / data.ratings.length;
+            return avg.toFixed(1); // Returns result with one decimal place, e.g., "4.5"
+        }
+        return "N/A"; // If no ratings exist
+    } catch (error) {
+        console.error(`Error fetching ratings for movie ${movieId}:`, error);
+        return "Error";
+    }
+}
+
+// ==========================================
+// PURE HELPERS
+// ==========================================
 
 // Helper function to create star rating HTML string based on a numeric rating (e.g., 4.5)
 function createStarRating(rating) {
@@ -52,27 +132,46 @@ function createStarRating(rating) {
     return stars;
 }
 
-// Calculates average rating for a given movieId by fetching all ratings and computing the average
-async function fetchAverageRating(movieId) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/ratings/${movieId}`); //
-        const data = await response.json();
-
-        if (data.status === "success" && data.ratings.length > 0) {
-            // Calculate average rating
-            let sum = 0;
-            for (const curr of data.ratings) {
-                sum += curr.rating;
-            }
-            const avg = sum / data.ratings.length;
-            return avg.toFixed(1); // Returns result with one decimal place, e.g., "4.5"
-        }
-        return "N/A"; // If no ratings exist
-    } catch (error) {
-        console.error(`Error fetching ratings for movie ${movieId}:`, error);
-        return "Error";
-    }
+function splitTitleAndYear(title) {
+    // For example, if the title is "The Matrix (1999)", it will separate "The Matrix" and "(1999)"
+    // match[0] = full title, match[1] = title without year, match[2] = year in parentheses (if exists)
+    const match = title.match(/(.+?)\s*(\(\d{4}\))?$/);
+    return {
+        titleOnly: match ? match[1] : title,
+        yearOnly: (match && match[2]) ? match[2] : ""
+    };
 }
+
+function formatGenres(genres) {
+    return genres ? genres.split('|').join(' • ') : "UNKNOWN"; // (from Action|Comedy to ACTION • COMEDY)
+}
+
+function normalizeRatingValue(avgRating) {
+    return (avgRating === "N/A" || avgRating === "Error") ? 0 : avgRating;
+}
+
+// ==========================================
+// VIEW HELPERS
+// ==========================================
+
+function showView(viewToShow) {
+    document.getElementById('homeView').classList.add('hidden');
+    document.getElementById('detailsView').classList.add('hidden');
+    document.getElementById('recommendationsView').classList.add('hidden');
+    document.getElementById(viewToShow).classList.remove('hidden');
+}
+
+function renderMovieDetails(movie) {
+    const { titleOnly, yearOnly } = splitTitleAndYear(movie.title);
+
+    document.getElementById('detailTitle').textContent = titleOnly;
+    document.getElementById('detailYear').textContent = yearOnly;
+    document.getElementById('detailGenres').textContent = formatGenres(movie.genres);
+}
+
+// ==========================================
+// VIEW RENDERING
+// ==========================================
 
 
 function renderMovies() {
@@ -124,7 +223,7 @@ function renderMovies() {
             if (starsElement) {
                 // if avgRating is "N/A" or "Error", we treat it as 0 for the star display,
                 //  otherwise we use the actual average rating
-                const ratingValue = (avgRating === "N/A" || avgRating === "Error") ? 0 : avgRating;
+                const ratingValue = normalizeRatingValue(avgRating);
                 starsElement.innerHTML = createStarRating(ratingValue);
             }
     });
@@ -187,31 +286,9 @@ function changePage(step) {
     goToPage(currentPage + step);
 }
 
-// defines initialization logic that runs when the DOM content (HTML) is fully loaded
-document.addEventListener('DOMContentLoaded', () => {
-    // Initial load from the database
-    fetchMovies();
-
-    const searchInput = document.getElementById('searchInput');
-    let timeout = null;
-
-    // every time search input changes (user types, deletes etc.)
-    searchInput.addEventListener('input', (e) => {
-        // Debounce: we wait before making the API call
-        clearTimeout(timeout); // if the user types again before 300ms, we reset the timer and wait again
-        // start a 300ms timer
-        // if it completes without interruption, we call fetchMovies with the current value of the search input
-        timeout = setTimeout(() => {
-            fetchMovies(e.target.value); // e is the event object, e.target is the input element, e.target.value is the current text in the search box
-        }, 300);
-    });
-});
-
 // ==========================================
-// DETAILS VIEW LOGIC
+// DETAILS VIEW
 // ==========================================
-let currentSelectedMovieId = null;
-let currentRating = 0;
 
 function showMovieDetails(movieId) {
     const movie = allMovies.find(m => m.movieId === movieId);
@@ -220,7 +297,7 @@ function showMovieDetails(movieId) {
     currentSelectedMovieId = movieId;
 
     // checks if the user has already rated this movie in the current session by looking into sessionStorage
-    const savedRatings = JSON.parse(sessionStorage.getItem('movieRatings')) || {};
+    const savedRatings = getSavedRatings();
     
     if (savedRatings[movieId]) {
         // If found, we display it!
@@ -235,72 +312,17 @@ function showMovieDetails(movieId) {
     // Update the stars UI based on the current rating
     updateStarsUI();
 
-    // Title and Year Separation (Regex to find the parentheses)
-    // For example, if the title is "The Matrix (1999)", it will separate "The Matrix" and "(1999)"
-    // match[0] = full title, match[1] = title without year, match[2] = year in parentheses (if exists)
-    const match = movie.title.match(/(.+?)\s*(\(\d{4}\))?$/); 
-    const titleOnly = match ? match[1] : movie.title;
-    const yearOnly = (match && match[2]) ? match[2] : "";
-
-    // Genre Formatting (from Action|Comedy to ACTION • COMEDY)
-    const formattedGenres = movie.genres ? movie.genres.split('|').join(' • ') : "UNKNOWN";
-
-    // update HTML of details view with the movie information (fills placeholders with actual data)
-    document.getElementById('detailTitle').textContent = titleOnly;
-    document.getElementById('detailYear').textContent = yearOnly;
-    document.getElementById('detailGenres').textContent = formattedGenres;
+    renderMovieDetails(movie);
 
     // screen transition to details view
-    document.getElementById('homeView').classList.add('hidden'); // hide home view
-    document.getElementById('recommendationsView').classList.add('hidden'); // hide recommendations view
-    document.getElementById('detailsView').classList.remove('hidden'); // show details view
+    showView('detailsView');
     window.scrollTo({ top: 0, behavior: 'smooth' }); // Smooth scroll to top when opening details
 }
 
 // Return to Home Page
 function returnToHome() {
-    document.getElementById('detailsView').classList.add('hidden');
-    document.getElementById('recommendationsView').classList.add('hidden');
-    document.getElementById('homeView').classList.remove('hidden');
+    showView('homeView');
     window.scrollTo({ top: 0, behavior: 'smooth' }); // Smooth scroll to top when returning home
-}
-
-// Logic for interactive star rating in details view
-const detailStars = document.querySelectorAll('.details-star'); // selects all elements with class 'details-star' (the 5 stars in the details view)
-const detailFeedback = document.getElementById('detailFeedback');
-const starContainer = document.getElementById('detailRatingStars');
-
-// star is the element itself, index is its position (0 to 4)
-detailStars.forEach((star, index) => {
-    // helper function that determines mouse position (left half 50% or right half) for half-star support
-    const calculateRating = (e) => {
-        // if cursor offset is less than half the star's width => 
-        // mouse is in the left half of the star => 
-        // it's a half star
-        const isHalf = e.offsetX < e.target.offsetWidth / 2; 
-        return index + (isHalf ? 0.5 : 1);
-    };
-
-    // event listener for hover
-    // while mouse is moving over a star, calculate the rating based on the mouse position and update the UI 
-    // to show the potential rating
-    star.addEventListener('mousemove', (e) => {
-        updateStarsUI(calculateRating(e));
-    });
-
-    // event listener for click
-    star.addEventListener('click', (e) => {
-        currentRating = calculateRating(e);
-        updateStarsUI(currentRating);
-        detailFeedback.textContent = `You selected ${currentRating} stars. Ready to rate!`;
-    });
-});
-
-// when the mouse leaves the star container, we want to reset the stars
-if (starContainer) {
-    starContainer.addEventListener('mouseleave', () => {
-        updateStarsUI(currentRating);
-    });
 }
 
 function updateStarsUI(ratingToDisplay = currentRating) {
@@ -329,7 +351,7 @@ async function renderRecommendationCarousel() {
         // cardsHTML will be an array of HTML strings
         const cardsHTML = await Promise.all(recommendedMovies.map(async (movie, index) => {
             const avgRating = await fetchAverageRating(movie.movieId);
-            const ratingValue = (avgRating === "N/A" || avgRating === "Error") ? 0 : avgRating;
+            const ratingValue = normalizeRatingValue(avgRating);
             const starsHTML = createStarRating(ratingValue);
             
             return `
@@ -390,73 +412,85 @@ function scrollToActive() {
 }
 
 
-// Submit Rating Button Logic
-document.getElementById('detailRateBtn').addEventListener('click', () => {
+// ==========================================
+// CONTROLLER / EVENT HANDLERS
+// ==========================================
+
+function handleDetailRateSubmit() {
     if (currentRating === 0) {
         detailFeedback.textContent = "Please select a rating first.";
         return;
     }
     
     // Save only for the current session 
-    // 1. Get the current session's saved ratings from sessionStorage
-    const savedRatings = JSON.parse(sessionStorage.getItem('movieRatings')) || {};
-    
-    // 2. Updating the rating for the current movie
-    savedRatings[currentSelectedMovieId] = currentRating;
-    
-    // 3. Save the updated ratings back to sessionStorage
-    sessionStorage.setItem('movieRatings', JSON.stringify(savedRatings));
+    saveRatingForSession(currentSelectedMovieId, currentRating);
 
     // Get the movie title from the details view to include in the success message
     const movieTitle = document.getElementById('detailTitle').textContent;
     
     // Display success message with the selected rating and movie title
     detailFeedback.textContent = `Success! Rated ${currentRating}/5 for movie: ${movieTitle}`;
+}
 
-});
+function bindDetailStarsInteractions() {
+    // star is the element itself, index is its position (0 to 4)
+    detailStars.forEach((star, index) => {
+        // helper function that determines mouse position (left half 50% or right half) for half-star support
+        const calculateRating = (e) => {
+            // if cursor offset is less than half the star's width =>
+            // mouse is in the left half of the star =>
+            // it's a half star
+            const isHalf = e.offsetX < e.target.offsetWidth / 2;
+            return index + (isHalf ? 0.5 : 1);
+        };
+
+        star.addEventListener('mousemove', (e) => {
+            updateStarsUI(calculateRating(e));
+        });
+
+        star.addEventListener('click', (e) => {
+            currentRating = calculateRating(e);
+            updateStarsUI(currentRating);
+            detailFeedback.textContent = `You selected ${currentRating} stars. Ready to rate!`;
+        });
+    });
+
+    if (starContainer) {
+        starContainer.addEventListener('mouseleave', () => {
+            updateStarsUI(currentRating);
+        });
+    }
+}
+
+function bindMenuInteractions() {
+    menuBtn.addEventListener('click', () => {
+        const isOpen = document.body.classList.contains("menu-open");
+        setMenuOpen(!isOpen);
+    });
+
+    menuClose.addEventListener('click', () => {
+        setMenuOpen(false);
+    });
+
+    screenBlur.addEventListener('click', () => {
+        setMenuOpen(false);
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            setMenuOpen(false);
+        }
+    });
+}
 
 // ==========================================
-// FLOATING MENU LOGIC
+// UI STATE / MENU HELPERS
 // ==========================================
-const menuBtn = document.getElementById('menuBtn');
-const floatingMenu = document.getElementById('floatingMenu');
-const menuClose = document.getElementById('menuClose');
-
 function setMenuOpen(open) {
     // We toggle the "menu-open" class on the body element(<body class="menu-open"> instead of <body>) 
     // which triggers the CSS to show or hide the menu and backdrop (body.menu-open .floating-menu { ... })
     document.body.classList.toggle("menu-open", open);
 }
-
-// Click on Hamburger icon
-menuBtn.addEventListener('click', () => {
-    const isOpen = document.body.classList.contains("menu-open"); // checks if the menu is currently open 
-    setMenuOpen(!isOpen); // if it's open, we close it; if it's closed, we open it
-});
-
-// Click on the X button
-menuClose.addEventListener('click', () => {
-    setMenuOpen(false);
-});
-
-// Close if the user presses the Escape key on the keyboard
-document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-        setMenuOpen(false);
-    }
-});
-
-// Close if the user clicks on the blurred background
-document.getElementById('screenBlur').addEventListener('click', () => {
-    setMenuOpen(false);
-});
-
-// --- Modal Elements ---
-const addMovieBtn = document.getElementById('addMovieBtn');
-const addMovieModal = document.getElementById('addMovieModal');
-const backdrop = document.getElementById('backdrop');
-const cancelBtn = document.getElementById('cancelBtn');
-const addMovieForm = document.getElementById('addMovieForm');
 
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
@@ -491,20 +525,13 @@ function closeModalSmoothly() {
     }, 300); // 300ms matches the CSS transition duration for a smooth fade-out effect
 }
 
-// Open modal when clicking "Add a movie" button
-addMovieBtn.addEventListener('click', () => {
+function handleAddMovieClick() {
     setMenuOpen(false); // Close the floating menu if it's open
     backdrop.hidden = false;
     addMovieModal.showModal();
-});
+}
 
-// Close Modal (Cancel)
-cancelBtn.addEventListener('click', () => {
-    closeModalSmoothly();
-});
-
-// Submit Form (Save)
-addMovieForm.addEventListener('submit', async (e) => {
+async function handleAddMovieSubmit(e) {
     e.preventDefault(); // prevents the default form submission behavior (which would cause a page reload)
     
     const title = document.getElementById('movieTitleInput').value; // user's text
@@ -559,15 +586,12 @@ addMovieForm.addEventListener('submit', async (e) => {
         // In case of failure, the modal can remain open and display the error message
         showToast(`Could not save the movie. ${error.message}`, 'error');
     }
-});
+}
 
-// Connect the "Get Recommendations" button
-const recommendationsBtn = document.getElementById('recommendationsBtn');
-
-recommendationsBtn.addEventListener('click', async () => {
+async function handleRecommendationsClick() {
     setMenuOpen(false); // Close the floating menu if it's open
     
-    const savedRatings = JSON.parse(sessionStorage.getItem('movieRatings')) || {};
+    const savedRatings = getSavedRatings();
     
     // If there are no ratings, we show a message and don't call the backend
     if (Object.keys(savedRatings).length === 0) {
@@ -578,10 +602,7 @@ recommendationsBtn.addEventListener('click', async () => {
     // turns savedRatings from an object like { "1": 4.5, "2": 3.0 }
     //  to an array of objects like [ { movieId: 1, rating: 4.5 }, { movieId: 2, rating: 3.0 } ]
     // just like the backend expects it for the /recommendations endpoint
-    const ratingsArray = Object.entries(savedRatings).map(([id, rating]) => ({
-        movieId: parseInt(id),
-        rating: rating
-    }));
+    const ratingsArray = buildRatingsArray(savedRatings);
 
     try {
         const response = await fetch(`${API_BASE_URL}/recommendations`, {
@@ -600,9 +621,7 @@ recommendationsBtn.addEventListener('click', async () => {
             renderRecommendationCarousel();
             
             // Change view only if there are recommendations
-            document.getElementById('homeView').classList.add('hidden');
-            document.getElementById('detailsView').classList.add('hidden');
-            document.getElementById('recommendationsView').classList.remove('hidden');
+            showView('recommendationsView');
             
         } else {
             // If list is empty, display a user-friendly message
@@ -611,9 +630,34 @@ recommendationsBtn.addEventListener('click', async () => {
     } catch (error) {
         showToast("Failed to connect to the recommendation engine.", "error");
     }
-});
+}
 
-// Close modal when clicking on the backdrop
-backdrop.addEventListener('click', () => {
-    closeModalSmoothly();
-});
+function bindSearchInput() {
+    let timeout = null;
+
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            fetchMovies(e.target.value);
+        }, 300);
+    });
+}
+
+function bindEvents() {
+    detailRateBtn.addEventListener('click', handleDetailRateSubmit);
+    addMovieBtn.addEventListener('click', handleAddMovieClick);
+    cancelBtn.addEventListener('click', closeModalSmoothly);
+    addMovieForm.addEventListener('submit', handleAddMovieSubmit);
+    recommendationsBtn.addEventListener('click', handleRecommendationsClick);
+    backdrop.addEventListener('click', closeModalSmoothly);
+    bindDetailStarsInteractions();
+    bindMenuInteractions();
+    bindSearchInput();
+}
+
+function init() {
+    fetchMovies();
+    bindEvents();
+}
+
+document.addEventListener('DOMContentLoaded', init);
