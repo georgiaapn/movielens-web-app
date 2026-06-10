@@ -10,9 +10,9 @@ def init_database():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    print("Δημιουργία πινάκων...")
+    print("Table creation ...")
     
-    # Πίνακας movies
+    # Table movies
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS movies (
             movieId INTEGER PRIMARY KEY,
@@ -21,7 +21,7 @@ def init_database():
         )
     ''')
 
-    # Πίνακας ratings
+    # Table ratings
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS ratings (
             userId INTEGER,
@@ -32,7 +32,7 @@ def init_database():
         )
     ''')
 
-    # Πίνακας tags
+    # Table tags
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tags (
             userId INTEGER,
@@ -42,42 +42,42 @@ def init_database():
         )
     ''')
 
-    print("Φόρτωση δεδομένων από τα CSV...")
+    print("Loading data from CSV files...")
 
-    # Φόρτωση movies.csv
+    # Load movies.csv
     try:
         with open(DATA_DIR / "movies.csv", 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             movies_data = [(row['movieId'], row['title'], row['genres']) for row in reader]
             cursor.executemany('INSERT OR IGNORE INTO movies (movieId, title, genres) VALUES (?, ?, ?)', movies_data)
-        print("Ο πίνακας 'movies' γέμισε!")
+        print("The 'movies' table has been populated!")
     except FileNotFoundError:
-        print("Δεν βρέθηκε το movies.csv")
+        print("File not found: movies.csv")
 
-    # Φόρτωση ratings.csv
+    # Load ratings.csv
     try:
         with open(DATA_DIR / "ratings.csv", 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             ratings_data = [(row['userId'], row['movieId'], row['rating'], row['timestamp']) for row in reader]
             cursor.executemany('INSERT OR IGNORE INTO ratings (userId, movieId, rating, timestamp) VALUES (?, ?, ?, ?)', ratings_data)
-        print("Ο πίνακας 'ratings' γέμισε!")
+        print("The 'ratings' table has been populated!")
     except FileNotFoundError:
-        print("Δεν βρέθηκε το ratings.csv")
+        print("File not found: ratings.csv")
 
-    # Φόρτωση tags.csv
+    # Load tags.csv
     try:
         with open(DATA_DIR / "tags.csv", 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             tags_data = [(row['userId'], row['movieId'], row['tag'], row['timestamp']) for row in reader]
             cursor.executemany('INSERT OR IGNORE INTO tags (userId, movieId, tag, timestamp) VALUES (?, ?, ?, ?)', tags_data)
-        print("Ο πίνακας 'tags' γέμισε!")
+        print("The 'tags' table has been populated!")
     except FileNotFoundError:
-        print("Δεν βρέθηκε το tags.csv")
+        print("File not found: tags.csv")
 
-    # Αποθήκευση αλλαγών και κλείσιμο
+    # Save changes and close connection
     conn.commit()
     conn.close()
-    print("\nΗ βάση δεδομένων αρχικοποιήθηκε επιτυχώς με pure sqlite3!")
+    print("\nThe database has been initialized successfully with pure sqlite3!")
 
 if __name__ == "__main__":
     init_database()
