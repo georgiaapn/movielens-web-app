@@ -138,8 +138,7 @@ def get_recommendations(user_ratings: list) -> list:
         if denominator == 0:
             continue
         predicted = user_mean + numerator / denominator
-        predicted = max(0.5, min(5.0, predicted)) # clamp the predicted rating to the range 0.5 - 5.0
-        predictions.append((mid, round(predicted, 4))) # we round the predicted rating to 4 decimal places for better readability
+        predictions.append((mid, predicted))
  
     # TOP_N movies with the highest predicted ratings
     predictions.sort(key=lambda x: x[1], reverse=True)
@@ -150,7 +149,7 @@ def get_recommendations(user_ratings: list) -> list:
         return []
  
     #  Retrieve titles and genres from the database
-    top_ids = [p[0] for p in top_predictions] # top_predictions = list of (movieId, predictedRating) tuples, so top_ids = [movieId1, movieId2, ...]
+    top_ids = [p[0] for p in top_predictions] # top_predictions = list of (movieId, rawPredictedRating) tuples
     id_placeholders = ",".join("?" * len(top_ids))
     movie_rows = conn.execute(
         f"SELECT movieId, title, genres FROM movies WHERE movieId IN ({id_placeholders})",
@@ -161,14 +160,15 @@ def get_recommendations(user_ratings: list) -> list:
     movie_info = {row["movieId"]: row for row in movie_rows}
  
     result = []
-    for mid, pred_rating in top_predictions:
+    for mid, raw_pred_rating in top_predictions:
         if mid in movie_info:
             m = movie_info[mid]
+            pred_rating = max(0.5, min(5.0, raw_pred_rating))
             result.append({
                 "movieId": m["movieId"],
                 "title": m["title"],
                 "genres": m["genres"],
-                "predictedRating": pred_rating,
+                "predictedRating": round(pred_rating, 4),
             })
  
     return result
