@@ -8,17 +8,27 @@
     --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
     --font-display: "Arial Narrow", "Franklin Gothic Medium", "Bahnschrift SemiCondensed", "Segoe UI Semibold", Arial, sans-serif;
     --font-handwritten: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+
+    --color-bg: #30106b;
+    --color-accent: #c6108f;
+    --color-accent-strong: #ff0080;
+    --color-text: #ffffff;
+    --color-muted: #cccccc;
+    --color-shadow: rgba(10, 3, 25, 0.9);
 }
 
 body {
-    background-color: #30106b;
-    color: #ffffff;
+    min-height: 100vh;
+    overflow-y: scroll; /* so that the logo doesn't jump when navigating between pages with different heights */
+    background-color: var(--color-bg);
+    color: var(--color-text);
     font-family: var(--font-body);
     font-size: 16px;
     line-height: 1.5;
-    min-height: 100vh;
-   /* Η μαγική εντολή που λύνει το "πήδημα" του λογότυπου */
-    overflow-y: scroll;
+}
+
+.hidden {
+    display: none !important;
 }
 
 .container {
@@ -27,56 +37,98 @@ body {
     padding: 0 20px;
 }
 
-/* Header (only includes search) */
-.header {
-    display: flex; /* Flexbox για να βάλουμε το search input και το κουμπί στην ίδια γραμμή */
-    align-items: center; /* Vertically center the search input and button */
-    justify-content: space-between; /* HTML inline justify-content: flex-end; */
-    padding: 30px 0;
+.main-content {
+    margin: 40px 0;
+}
+
+/* ========================================= */
+/* GLOBAL APP SHELL                          */
+/* ========================================= */
+
+.global-header {
+    position: absolute; /* absolute so it can sit on top of the content */
+    top: 0;
+    left: 0; /* top: 0 and left: 0 make it stick to the top-left corner */
+    width: 100%; /* full width of the viewport */
+    z-index: 1000; /* high z-index to ensure it stays above other content */
+    padding-top: 30px;
+    pointer-events: none;
+}
+
+.header-left {
+    display: flex; /* Flexbox so that the 2 items (hamburger icon and logo) are in a row */
+    align-items: center; /* Vertically center the items in the same height */
+    gap: 30px; /* Distance between the hamburger icon and the logo */
+    width: fit-content;
 }
 
 .menu-btn {
-    background: none; /* no background, just the 3 lines*/
-    border: none;
-    cursor: pointer; /* indicates it's clickable */
     display: flex; /* Flexbox to stack the 3 lines vertically */
     flex-direction: column;
+    align-items: center; /* Center the lines horizontally in the button */
+    justify-content: center; /* Center the lines vertically in the button */
     gap: 6px; /* space between the lines */
     width: 40px; /* width of the hamburger button */
     height: 40px; /* height of the hamburger button */
-    align-items: center; /* Center the lines horizontally in the button */
-    justify-content: center; /* Center the lines vertically in the button */
+    border: none;
+    background: none; /* no background, just the 3 lines*/
+    cursor: pointer; /* indicates it's clickable */
+    position: relative;
+    z-index: 1010;
+    pointer-events: auto;
 }
 
 .menu-btn span { /* Each line of the hamburger */
     width: 24px;
     height: 3px;
-    background-color: #c6108f;
     border-radius: 2px;
+    background-color: var(--color-accent);
 }
 
 .logo {
+    position: relative;
+    z-index: 1010;
+    pointer-events: auto;
+    cursor: pointer; /* indicates it's clickable */
+    color: var(--color-accent);
     font-family: var(--font-handwritten);
+    font-size: 84px;
     font-weight: 400;
     font-style: normal;
-    font-size: 84px;
-    color: #c6108f;
-    text-align: center;
     letter-spacing: 2px;
-    /* -4px left, 3px down, 0px blur, dark purple color */
-    text-shadow: -16px 3px 4px #1a0f2e;
-    cursor: pointer; /* indicates it's clickable */
+    text-align: center;
+    text-shadow: -16px 3px 4px #1a0f2e; /* -4px left, 3px down, 0px blur, dark purple color */
+}
+
+/* ========================================= */
+/* HOME VIEW                                 */
+/* ========================================= */
+
+#homeView {
+    position: relative;
+}
+
+/* Header (only includes search) */
+.header {
+    display: flex; /* Flexbox so that search input and button are in the same line */
+    align-items: center; /* Vertically center the search input and button */
+    justify-content: space-between; /* HTML inline justify-content: flex-end; */
+    padding: 30px 0;
+    position: relative;
+    z-index: 900;
+    pointer-events: none;
 }
 
 /* Search Container (wrapper for search input and button) */
 .search-container {
-    display: flex; /* Flexbox to put the search input and button in the same line */
-    justify-content: center; /* Center the search container horizontally in the header */
-    align-items: center; /* Vertically center the search input and button */
     position: relative; /* Relative positioning so that the search button can be positioned absolutely inside it */
-    max-width: 400px; /* Maximum width for the search container to prevent it from being too wide on large screens */
+    display: flex; /* Flexbox to put the search input and button in the same line */
+    align-items: center; /* Vertically center the search input and button */
+    justify-content: center; /* Center the search container horizontally in the header */
     width: 100%; /* Make the search container take the full width of its parent (up to max-width) */
+    max-width: 400px; /* Maximum width for the search container to prevent it from being too wide on large screens */
     margin: 0; /* Remove default margin to prevent unwanted spacing around the search container */
+    pointer-events: auto;
 }
 
 .search-input {
@@ -84,43 +136,40 @@ body {
     padding: 12px 45px 12px 20px; /* 45px right padding to make space for the search button */
     border: none;
     border-radius: 25px;
+    outline: none; /* Remove default focus outline */
     background-color: #ece6f0;
     color: #86818b;
     font-size: 14px;
-    outline: none; /* Remove default focus outline */
+    pointer-events: auto;
 }
 
 .search-input::placeholder {
-    color: #c6108f;
+    color: var(--color-accent);
 }
 
 .search-btn {
     position: absolute; /* Absolute positioning to place the button on top of the search input */
-    right: 15px;
     top: 50%; /* Position the button in the middle of the search input */
+    right: 15px;
     transform: translateY(-50%); /* Vertically center the button relative to the search input */
-    background: none;
-    border: none;
-    cursor: pointer; /* indicates it's clickable */
-    color: #c6108f; /* Gives color to the SVG (stroke="currentColor") */
     display: flex; /* Flexbox to center the SVG icon inside the button */
     align-items: center; /* Vertically */
     justify-content: center; /* Horizontally*/
-}
-
-/* Main Content */
-.main-content {
-    margin: 40px 0;
+    border: none;
+    background: none;
+    color: var(--color-accent); /* Gives color to the SVG (stroke="currentColor") */
+    cursor: pointer; /* indicates it's clickable */
+    pointer-events: auto;
 }
 
 /* "All movies" Section Title */
 .section-title {
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--color-accent);
     font-family: var(--font-display);
     font-size: 32px;
     font-weight: 400;
-    margin-bottom: 30px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #c6108f;
 }
 
 /* Container where all JS movie cards will be placed. Movies Grid: 4 columns */
@@ -131,52 +180,32 @@ body {
     margin-bottom: 40px; /* space below the grid, before pagination */
 }
 
-/* Responsive for small screens */
-/* For screens smaller than 1024px (tablets) */
-@media (max-width: 1024px) {
-    .movies-grid {
-        grid-template-columns: repeat(2, 1fr); /* 2 columns in tablets */
-    }
-}
-
-/* For screens smaller than 600px (mobile phones) */
-@media (max-width: 600px) {
-    .movies-grid {
-        grid-template-columns: 1fr; /* 1 column in mobile phones */
-    }
-}
-
-/* Movie Card */
 .movie-card {
-    background-color: #30106b;
-    border: none; /* Αφαιρούμε το border για να δείχνει πιο καθαρό, όπως στο Figma */
-    border-radius: 20px; /* Κάνουμε τις γωνίες ελαφρώς πιο τετράγωνες */
-    overflow: hidden;
-    padding: 20px;
     display: flex;
     flex-direction: column;
-    transition: all 0.2s ease;
-    
-    /* Η ΣΚΙΑ: -12px προς τα αριστερά, 8px προς τα κάτω, 4px θολούρα */
-    box-shadow: -12px 8px 10px rgba(10, 3, 25, 0.9);
+    overflow: hidden;
+    padding: 20px;
+    border: none; /* Remove border to make it look cleaner, as in the Figma design */
+    border-radius: 20px; /* Make the corners slightly more square */
+    background-color: var(--color-bg);
+    box-shadow: -12px 8px 10px var(--color-shadow); /* The SHADOW: -12px to the left, 8px down, 4px blur */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .movie-card:hover {
-    /* Όταν πάει το ποντίκι από πάνω, η κάρτα κινείται ελαφρώς πάνω και δεξιά... */
-    transform: translate(4px, -4px);
-    /* ...και η σκιά "μακραίνει" δίνοντας μια ωραία 3D αίσθηση */
-    box-shadow: -16px 16px 10px rgba(10, 3, 25, 0.9);
+    transform: translate(4px, -4px); /* When the mouse hovers over it, the card moves slightly up and to the right... */
+    box-shadow: -16px 16px 10px var(--color-shadow); /* ...and the shadow "stretches" giving a nice 3D effect */
 }
 
 .movie-name {
+    margin-bottom: 12px;
+    color: var(--color-text);
     font-family: var(--font-display);
     font-size: 20px;
-    font-style: normal;
-    font-weight: 400; /* Ή 700 αν τη θέλεις πιο έντονη */
-    margin-bottom: 12px;
-    color: #ffffff;
+    font-weight: 400; 
     letter-spacing: 0.5px;
 }
+
 .movie-info {
     display: flex;
     align-items: center;
@@ -186,14 +215,14 @@ body {
 
 .stars {
     display: flex;
-    gap: 4px;
     align-items: center;
+    gap: 4px;
 }
 
 .star {
-    color: #c6108f; /* full starts are pink */
+    color: var(--color-accent); /* full starts are pink */
     font-size: 22px; /* a bit larger so that the outline looks nice */
-    -webkit-text-stroke: 1px #c6108f; /* Puts a pink outline on ALL stars */
+    -webkit-text-stroke: 1px var(--color-accent); /* Puts a pink outline on ALL stars */
 }
 
 .star.empty {
@@ -202,177 +231,109 @@ body {
 }
 
 .star.half {
-    /* Half the star is gray and the other half is pink */
-    background: linear-gradient(to right, #c6108f 50%, #d8d8d8 50%);
-    /*background-clip: text;*/
+    background: linear-gradient(to right, var(--color-accent) 50%, #d8d8d8 50%); /* Half the star is gray and the other half is pink */
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     /* The outline is automatically retained from the .star class */
 }
 
 .rating-count {
+    margin-left: auto;
+    color: var(--color-muted);
     font-family: var(--font-display);
     font-size: 24px;
-    color: #cccccc;
-    margin-left: auto;
-}
-
-.rate-btn {
-    background-color: #c6108f;
-    color: #ffffff;
-    border: none;
-    padding: 8px 24px;
-    border-radius: 4px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    align-self: flex-start;
-}
-
-.rate-btn:hover {
-    background-color: #ff0080;
 }
 
 /* Pagination */
 .pagination {
     display: flex; /* Flexbox to place buttons in a row */
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     gap: 10px; /* space between pagination buttons */
     margin: 40px 0;
     padding-bottom: 40px;
 }
 
-.pagination-btn {
-    background: none;
+.pagination-btn,
+.pagination-number {
     border: none;
-    color: #999999;
-    cursor: pointer; /* indicates it's clickable */
+    background: none;
+    cursor: pointer;
     font-size: 14px;
+}
+
+.pagination-btn {
     padding: 8px 12px;
+    color: #999999;
     transition: color 0.2s ease; /* Smooth color transition on hover */
 }
 
 .pagination-btn:hover {
-    color: #c6108f;
+    color: var(--color-accent);
 }
 
 .pagination-number {
-    background: none;
-    border: none;
-    color: #ffffff;
-    cursor: pointer;
-    font-size: 14px;
     padding: 8px 12px;
-    transition: all 0.2s ease; /* Smooth color transition on hover */
+    color: var(--color-text);
+    transition: color 0.2s ease; /* Smooth color transition on hover */
 }
 
-.pagination-number:hover {
-    color: #c6108f;
+.pagination-number:hover,
+.pagination-number.active {
+    color: var(--color-accent);
 }
 
 .pagination-number.active { /* Style for the active page number */
-    color: #c6108f;
     font-weight: 600;
 }
 
 /* The "..." in pagination */
 .pagination-ellipsis {
+    padding: 8px 4px;
     color: #999999;
     font-size: 14px;
-    padding: 8px 4px;
-}
-
-/* Responsive */
-/* For screens smaller than 768px (tablets) */
-@media (max-width: 768px) {
-    .logo {
-        font-size: 14px;
-    }
-
-    .movies-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 20px;
-    }
-
-    .section-title {
-        font-size: 20px;
-    }
-}
-
-/* For screens smaller than 480px (mobile phones) */
-@media (max-width: 480px) {
-    .container {
-        padding: 0 10px;
-    }
-
-    .logo {
-        font-size: 10px;
-    }
-
-    .movies-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 15px;
-    }
-
-    .movie-card {
-        padding: 15px;
-    }
-
-    .section-title {
-        font-size: 18px;
-    }
 }
 
 /* ========================================= */
-/* VIEW 2: MOVIE DETAILS (SPA LOGIC)         */
+/* MOVIE DETAILS VIEW                        */
 /* ========================================= */
-
-.hidden {
-    display: none !important;
-}
 
 .movie-detail {
     min-height: 100vh; /* Ensure it takes the full height of the viewport */
     display: grid; /* enables grid layout*/
-    grid-template-columns: minmax(0, 1.7fr) minmax(420px, 1fr); 
-    /* seperates into 2 columns, left takes 1.7 times more 
-    space than the right, but the right is at least 420px wide */
-    background-color: #30106b;
+    grid-template-columns: minmax(0, 1.7fr) minmax(420px, 1fr); /* seperates into 2 columns, left takes 1.7 times more space than the right, but the right is at least 420px wide */
+    background-color: var(--color-bg);
 }
 
-/* Left Panel */
 .movie-detail__left {
     position: relative; /* Relative positioning so that the back button can be positioned absolutely inside it */
-    padding: 180px 80px 150px 80px; /* Το big top padding (180px) for the Logo! */
-    background: #30106b;
+    padding: 180px 80px 150px; /* Το big top padding (180px) for the Logo! */
+    background: var(--color-bg);
 }
-/* wrapper for title + genres */
+
 .movie-copy {
-    margin-top: 100px;
+    margin-top: 100px; /* wrapper for title + genres */
 }
 
 /* Movie Title and Year */
 .movie-title {
-    margin: 0;
     display: flex; /* Flexbox to stack the title and year vertically */
     flex-direction: column;
     gap: 10px; /* space between title and year */
+    margin: 0;
+    color: var(--color-text);
     font-family: var(--font-display);
     font-size: 80px;
     font-weight: 300;
     line-height: 1;
-    color: #ffffff;
     text-transform: uppercase; /* Make the title uppercase */
 }
 
-/* Make the year smaller and lighter than the title */
 .movie-title span:last-child {
-    font-size: 0.8em;
+    font-size: 0.8em; /* Make the year smaller and lighter than the title */
 }
 
-.genre-block { 
+.genre-block {
     margin-top: 80px;
 }
 
@@ -401,10 +362,9 @@ body {
     height: 60px;
     border: 0;
     background: transparent;
-    color: #c6108f;
+    color: var(--color-accent);
     cursor: pointer; /* indicates it's clickable */
 }
-
 
 /* Right Panel */
 .movie-detail__right {
@@ -412,7 +372,7 @@ body {
     align-items: center;
     justify-content: center;
     padding: 40px;
-    background: linear-gradient(to bottom, #5c4290 0%, #5c4290 75%, #30106b 100%);  /* background "fades" smoothly to the color of the bottom section  */
+    background: linear-gradient(to bottom, #5c4290 0%, #5c4290 75%, var(--color-bg) 100%); /* background "fades" smoothly to the color of the bottom section  */
     border-left: 1px solid transparent; /* border "fades" and becomes fully transparent */
     border-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.08) 75%, transparent 100%) 1;
 }
@@ -425,106 +385,156 @@ body {
 }
 
 .rating-panel__prompt { /* LET US KNOW HOW MUCH YOU LIKED IT! */
+    margin-bottom: 20px;
     font-family: var(--font-display);
     font-size: 24px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-bottom: 20px;
 }
 
 /* Interactive Stars for Details Page */
 .details-star {
-    background: transparent;
+    padding: 0;
     border: none;
+    background: transparent;
     font-size: 36px; /* larger than the default in home page */
     cursor: pointer;
-    transition: transform 0.2s; /* Smooth zoom effect on hover */
-    padding: 0;
+    transition: transform 0.2s ease; /* Smooth zoom effect on hover */
 }
 
-/* Smooth zoom effect on hover */
 .details-star:hover {
-    transform: scale(1.1);
+    transform: scale(1.1); /* Smooth zoom effect on hover */
 }
 
 /* The "Rate" button in the details page */
 .rate-action {
-    background: #c6108f;
-    color: #fff;
-    border: none;
+    margin-top: 30px;
     padding: 12px 30px;
+    border: none;
     border-radius: 8px;
+    background: var(--color-accent);
+    color: #fff;
     font-size: 18px;
     cursor: pointer;
-    transition: 0.2s; /* Smooth  color change on hover */
-     margin-top: 30px;
+    transition: background-color 0.2s ease; /* Smooth  color change on hover */
 }
+
 .rate-action:hover {
-    background: #ff0080;
+    background: var(--color-accent-strong);
 }
 
 /* Select a rating to continue.*/
 .rating-feedback {
     margin-top: 20px;
+    color: rgba(255, 255, 255, 0.8);
     font-family: var(--font-display);
     font-size: 18px;
-    color: rgba(255, 255, 255, 0.8);
 }
 
 /* ========================================= */
-/* GLOBAL APP SHELL                          */
-/* ========================================= */
-.global-header {
-    position: absolute; /* absolute so it can sit on top of the content */
-    top: 0;
-    left: 0; /* top: 0 and left: 0 make it stick to the top-left corner */
-    width: 100%; /* full width of the viewport */
-    z-index: 1000; /* high z-index to ensure it stays above other content */
-    padding-top: 30px;
-}
-
-.header-left {
-    display: flex; /* Flexbox so that the 2 items (hamburger icon and logo) are in a row */
-    align-items: center; /* Vertically center the items in the same height */
-    gap: 30px; /* Distance between the hamburger icon and the logo */
-}
-
-/* ========================================= */
-/* ANIMATIONS (Ομαλές Μεταβάσεις Οθονών)     */
+/* RECOMMENDATIONS VIEW                      */
 /* ========================================= */
 
-/* Φτιάχνουμε τον "κανόνα" της κίνησης: από διαφανές και λίγο πιο κάτω, στο κανονικό */
-@keyframes fadeSlideIn {
-    0% {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* Wrapper for recommendations view */
+#recommendationsView {
+    min-height: 100vh; /* Ensure it takes the full height of the viewport */
+    padding-top: 150px; /* space so it doesn't overlap with Global Logo */
 }
 
-/* Εφαρμόζουμε την κίνηση στα δύο βασικά μας views */
-#homeView, #detailsView {
-    /* Η κίνηση θα διαρκεί 0.4 δευτερόλεπτα και θα φρενάρει μαλακά στο τέλος (ease-out) */
-    animation: fadeSlideIn 0.4s ease-out forwards;
+#recommendationsView .main-content {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+/* wrapper for arrows + carousel */
+#recommendationsView .carousel-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px; /* space between arrows and carousel cards */
+    margin-top: 60px; /* space from the title/separator */
+}
+
+/* Recommendations View - Anti-Jump Styles */
+#recommendationsView .carousel {
+    display: flex; /* Flexbox to have carousel cards in a row */
+    align-items: center;
+    gap: 10px; /* space between carousel cards */
+    width: 100%; /* Use all container width */
+    padding: 100px 0;
+    overflow-x: auto; /* Enable horizontal scrolling */
+    list-style: none;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none; /* Hides scrollbar */
+}
+
+#recommendationsView .carousel::-webkit-scrollbar {
+    display: none;
+}
+
+#recommendationsView .carousel-item { /* Each card in the carousel */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto; /* All cards have the same base size and don't shrink or grow */
+    width: 300px;
+    height: 150px;
+    border: 2px solid rgba(255, 20, 147, 0.3);
+    border-radius: 12px;
+    background: rgba(45, 18, 80, 0.4);
+    opacity: 0.4; /* Makes disabled cards look faded */
+    transform: scale(0.7); /* Makes disabled cards look faded */
+    scroll-snap-align: center; /* Each card will snap to the center when scrolling */
+    box-shadow: none;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease, box-shadow 0.6s ease;
+}
+
+#recommendationsView .carousel-item:hover {
+    transform: scale(0.7);
+    box-shadow: none;
+}
+
+#recommendationsView .carousel-item.active {
+    z-index: 10;
+    opacity: 1;
+    transform: scale(1.1); /* Active card gets enlarged and highlighted */
+    border-color: #ff1493;
+    background: rgba(45, 18, 80, 0.8);
+    box-shadow: 0 0 40px rgba(255, 20, 147, 0.4);
+}
+
+#recommendationsView .carousel-item.active:hover {
+    transform: scale(1.1);
+}
+
+#recommendationsView .movie-name {
+    text-align: center;
+}
+
+/* Navigation arrows */
+.carousel-arrow {
+    border: none;
+    background: none;
+    color: #ff1493;
+    font-size: 3rem;
+    cursor: pointer;
 }
 
 /* ========================================= */
 /* FLOATING MENU & BLUR                      */
 /* ========================================= */
+
 .screen-blur {
     position: fixed; /* fixed so it doesn't scroll with the page */
     inset: 0; /* Cover the entire viewport */
+    z-index: 1005;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* Completely disabled when the menu is closed */
     background: rgba(208, 196, 224, 0.42);
     backdrop-filter: blur(3px);
     -webkit-backdrop-filter: blur(3px);
-    z-index: 1005;
-    opacity: 0;
-    /* Completely disabled when the menu is closed */
-    visibility: hidden;
-    pointer-events: none;
     transition: opacity 180ms ease, visibility 180ms;
 }
 
@@ -536,36 +546,27 @@ body.menu-open .screen-blur {
 
 .floating-menu {
     position: fixed; /* fixed so it stays in place when scrolling */
-    left: 20px; /* leave some space from the left edge */
     top: 30px; /* leave some space from the top edge, aligned with the header */
+    left: 20px; /* leave some space from the left edge */
+    z-index: 1015; /* above the blur layer */
     display: flex; /* buttons in a column one below the other */
-    flex-direction: column; 
-    gap: 8px; /* space between buttons */
-    width: 180px; 
-    z-index: 1010; /* above the blur layer */
+    flex-direction: column;
     align-items: flex-start; /* Align buttons to the left for a more natural look */
-    /* Completely disabled when the menu is closed */
+    gap: 8px; /* space between buttons */
+    width: 180px;
     opacity: 0;
     visibility: hidden;
-    pointer-events: none;
-    /* Rotate and scale down the menu when it's closed, so it "pops" in when opened */
-    transform-origin: top left; 
-    transform: rotate(-90deg) scale(0.5); 
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    pointer-events: none; /* Completely disabled when the menu is closed */
+    transform: rotate(-90deg) scale(0.5); /* Rotate and scale down the menu when it's closed, so it "pops" in when opened */
+    transform-origin: top left;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease, visibility 0.4s ease;
 }
 
-/* When the menu opens, we reset the transform to normal, making it pop in with a nice animation */
 body.menu-open .floating-menu {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transform: rotate(0deg) scale(1); 
-}
-
-#homeView {
-    position: relative;
-    /* Το φέρνουμε μπροστά από το background για να δέχεται κλικ */
-    z-index: 5; 
+    transform: rotate(0deg) scale(1); /* When the menu opens, we reset the transform to normal, making it pop in with a nice animation */
 }
 
 /* Menu's buttons */
@@ -590,20 +591,20 @@ body.menu-open .floating-menu {
 
 /* Menu's close button (X) */
 .floating-close {
-    margin-left: 92px; /* We place it to the right of the menu, with some space */
+    display: flex; /* Center the "X" inside the button */
+    align-items: center; /* Vertically center */
+    justify-content: center; /* Horizontally center */
     width: 43px;
     height: 43px; /* Makes the button square */
+    margin-left: 92px; /* We place it to the right of the menu, with some space */
     border: 0;
     border-radius: 50%; /* Makes it perfectly circular */
-    background: #4b1ea5; 
+    background: #4b1ea5;
     color: #fff;
     font-size: 24px;
     line-height: 1;
     box-shadow: 0 10px 20px rgba(74, 30, 165, 0.28);
     cursor: pointer;
-    display: flex; /* Center the "X" inside the button */
-    align-items: center; /* Vertically center */
-    justify-content: center; /* Horizontally center */
     transition: transform 0.2s ease; /* Prepares for hover animation */
 }
 
@@ -611,127 +612,246 @@ body.menu-open .floating-menu {
     transform: scale(1.05); /* Slightly enlarges the button on hover for a nice interactive feel */
 }
 
+/* ========================================= */
+/* ADD MOVIE MODAL                           */
+/* ========================================= */
+
 /* --- ADD MOVIE MODAL --- */
 .backdrop {
     position: fixed;
     inset: 0;
+    z-index: 2500; /* higher than everything */
+    pointer-events: auto;
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(3px);
-    z-index: 2500; /* higher than everything */
-    pointer-events: auto; 
 }
 
 .add-movie-modal {
     position: fixed;
     top: 50%; /* Center the modal vertically */
     left: 50%; /* Center the modal horizontally */
-    transform: translate(-50%, -50%); /* Center the modal on the screen */
+    z-index: 2600; /* The modal is even higher */
+    width: 340px;
+    padding: 0;
     border: 3px solid #b0e3ff;
     border-radius: 16px;
     background: #a3d9ff;
-    padding: 0;
-    width: 340px;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
-    z-index: 2600; /* The modal is even higher */
+    transform: translate(-50%, -50%); /* Center the modal on the screen */
 }
 
 /* Hide the default backdrop of the dialog element, since we are using our custom .backdrop div */
-.add-movie-modal::backdrop { display: none; } 
+.add-movie-modal::backdrop {
+    display: none;
+}
 
-.modal-content { padding: 28px 24px; }
-.modal-title { 
-    margin: 0 0 22px; 
+.modal-content {
+    padding: 28px 24px;
+}
+
+.modal-title {
+    margin: 0 0 22px;
+    color: #1a1a2e;
     font-family: var(--font-display);
     font-size: 1.8rem;
+}
+
+.modal-form {
+    display: flex; /* Stack form elements vertically  */
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex; /* Stack title label and input vertically */
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-label {
     color: #1a1a2e;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    text-transform: uppercase;
 }
 
-.modal-form { display: flex; flex-direction: column; gap: 20px; } /* Stack form elements vertically  */
-.form-group { display: flex; flex-direction: column; gap: 8px; } /* Stack title label and input vertically */
-.form-label { 
-    font-family: var(--font-display); 
-    font-size: 1.2rem; 
-    color: #1a1a2e; 
-    text-transform: uppercase; 
-}
-
-.form-input, .form-select {
-    font-family: var(--font-body); 
+.form-input,
+.form-select {
     padding: 10px 12px;
     border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 4px;
-    background: white;
-    font-size: 1rem; 
+    background: #fff;
+    font-family: var(--font-body);
+    font-size: 1rem;
 }
 
-.modal-actions { display: flex; gap: 12px; margin-top: 16px; } /* Cancel, save buttons in a row */
-.btn { 
-    font-family: var(--font-display); /* Προσθήκη Γραμματοσειράς */
+.form-select[multiple] {
+    height: 140px; /* Set a fixed height for the multi-select to prevent it from growing indefinitely when there are many genres. */
+    overflow-y: auto; /* Scrollbar when needed */
+    padding: 6px;
+}
+
+.form-select[multiple] option {
+    margin-bottom: 2px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+/* Color when you select a genre (we're using pink) */
+.form-select[multiple] option:checked {
+    background-color: var(--color-accent);
+    color: #ffffff;
+}
+
+.modal-actions {
+    display: flex; /* Cancel, save buttons in a row */
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.btn {
     flex: 1; /* Same width for both buttons */
-    padding: 10px; 
-    border-radius: 4px; 
-    cursor: pointer; 
-    font-weight: 600; 
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
     font-size: 1.2rem;
 }
-.btn-cancel { font-family: var(--font-body); font-weight: 400; background: transparent; border: 1px solid #1a1a2e; }
-.btn-save { font-family: var(--font-body); font-weight: 400; background: #000; color: #fff; border: none; }
 
-/* ========================================= */
-/* ANIMATIONS FOR ADD MOVIE MODAL         */
-/* ========================================= */
-
-/* 1. Η κίνηση για το θολό φόντο (Fade In) */
-@keyframes backdropFade {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
+.btn-cancel {
+    border: 1px solid #1a1a2e;
+    background: transparent;
+    color: #1a1a2e;
+    font-family: var(--font-body);
+    font-weight: 400;
 }
 
-/* 2. Η κίνηση για το παραθυράκι (Pop In) */
+.btn-save {
+    border: none;
+    background: #000;
+    color: #fff;
+    font-family: var(--font-body);
+    font-weight: 400;
+}
+
+/* ========================================= */
+/* TOAST                                     */
+/* ========================================= */
+
+/* TOAST NOTIFICATION */
+.toast {
+    position: fixed;
+    bottom: -100px; /* Starts hidden below the screen */
+    left: 50%;
+    z-index: 3000;
+    padding: 14px 28px;
+    border-radius: 8px;
+    transform: translateX(-50%); /* Center horizontally */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    pointer-events: none; /* Doesn't block clicks */
+    transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Smooth slide up animation */
+}
+
+.toast.show {
+    bottom: 40px; /* When JS adds the 'show' class, it slides up */
+}
+
+.toast.success {
+    background-color: #10b981; /* Green for success */
+}
+
+.toast.error {
+    background-color: #ef4444; /* Red for failure */
+}
+
+/* ========================================= */
+/* ANIMATIONS                                */
+/* ========================================= */
+
+/* We create the "rule" for the animation: from transparent and slightly lower, to the normal position */
+@keyframes fadeSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 1. The animation for the dimmed background (Fade In) */
+@keyframes backdropFade {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+/* 2. The animation for the modal (Pop In) */
 @keyframes modalPopIn {
     0% {
         opacity: 0;
-        /* Ξεκινάει λίγο πιο κάτω (-40% αντί για -50%) και πιο μικρό (scale 0.8) */
-        transform: translate(-50%, -40%) scale(0.8); 
+        transform: translate(-50%, -40%) scale(0.8);
     }
+
     100% {
         opacity: 1;
-        /* Καταλήγει στην κανονική του θέση */
-        transform: translate(-50%, -50%) scale(1); 
+        transform: translate(-50%, -50%) scale(1);
     }
 }
 
-/* Εφαρμόζουμε την κίνηση στο φόντο ΜΟΝΟ όταν δεν είναι hidden */
-.backdrop:not([hidden]) {
-    animation: backdropFade 0.3s ease-out forwards;
-}
-
-/* Εφαρμόζουμε την κίνηση στο modal ΜΟΝΟ όταν είναι ανοιχτό (open attribute) */
-.add-movie-modal[open] {
-    /* Χρησιμοποιούμε cubic-bezier για να κάνει μια πολύ ελαφριά, φυσική αναπήδηση στο τέλος */
-    animation: modalPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-/* 3. Η κίνηση για το θολό φόντο (Fade Out) */
+/* 3. The animation for the dimmed background (Fade Out) */
 @keyframes backdropFadeOut {
-    0% { opacity: 1; }
-    100% { opacity: 0; }
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
 }
 
-/* 4. Η κίνηση για το παραθυράκι (Pop Out) */
+/* 4. The animation for the modal (Pop Out) */
 @keyframes modalPopOut {
     0% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
     }
+
     100% {
         opacity: 0;
-        /* Πέφτει ελαφρώς και μικραίνει καθώς εξαφανίζεται */
-        transform: translate(-50%, -40%) scale(0.8); 
+        transform: translate(-50%, -40%) scale(0.8);
     }
 }
 
-/* Κλάσεις που θα βάζει η JS όταν κλείνουμε το modal */
+/* We apply the animation to our two main views */
+#homeView,
+#detailsView {
+    animation: fadeSlideIn 0.4s ease-out forwards; /* The animation will last 0.4 seconds and will ease out at the end */
+}
+
+/* We apply the animation to the backdrop ONLY when it's not hidden */
+.backdrop:not([hidden]) {
+    animation: backdropFade 0.3s ease-out forwards;
+}
+
+/* We apply the animation to the modal ONLY when it's open */
+.add-movie-modal[open] {
+    animation: modalPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; /* We use cubic-bezier to create a subtle, natural bounce at the end */
+}
+
+/* Classes that will be added by JS when closing the modal */
 .backdrop.is-closing {
     animation: backdropFadeOut 0.3s ease-in forwards;
 }
@@ -741,173 +861,114 @@ body.menu-open .floating-menu {
 }
 
 /* ========================================= */
-/* MULTIPLE SELECT STYLES                    */
-/* ========================================= */
-.form-select[multiple] {
-    height: 140px; /* Σταθερό ύψος για να χωράει 5-6 επιλογές */
-    overflow-y: auto; /* Scrollbar όταν χρειάζεται */
-    padding: 6px;
-}
-
-.form-select[multiple] option {
-    padding: 8px 12px;
-    margin-bottom: 2px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-/* Χρώμα όταν επιλέγεις ένα είδος (χρησιμοποιούμε το ροζ σου!) */
-.form-select[multiple] option:checked {
-    background-color: #c6108f;
-    color: #ffffff;
-}
-
-/* ========================================= */
-/* TOAST NOTIFICATION                        */
-/* ========================================= */
-.toast {
-    position: fixed;
-    bottom: -100px; /* Starts hidden below the screen */
-    left: 50%;
-    transform: translateX(-50%); /* Center horizontally */
-    padding: 14px 28px;
-    border-radius: 8px;
-    font-family: var(--font-display);
-    font-size: 1.4rem;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    color: #fff;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-    z-index: 3000;
-    transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Smooth slide up animation */
-    pointer-events: none; /* Doesn't block clicks */
-}
-
-.toast.show {
-    bottom: 40px; /* When JS adds the 'show' class, it slides up */
-}
-
-.toast.success { background-color: #10b981; } /* Green for success */
-.toast.error { background-color: #ef4444; }   /* Red for failure */
-
-/* Wrapper for recommendations view */
-#recommendationsView {
-    padding-top: 150px; /* space so it doesn't overlap with Global Logo */
-    min-height: 100vh; /* Ensure it takes the full height of the viewport */
-}
-
-#recommendationsView .main-content {
-    margin-top: 0; 
-    padding-top: 0;
-}
-
-/* wrapper for arrows + carousel */
-#recommendationsView .carousel-container {
-    margin-top: 60px; /* space from the title/separator */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 40px; /* space between arrows and carousel cards */
-}
-
-/* Recommendations View - Anti-Jump Styles */
-#recommendationsView .carousel {
-    display: flex; /* Flexbox to have carousel cards in a row */
-    gap: 10px; /* space between carousel cards */
-    align-items: center;
-    list-style: none;
-    padding: 100px 0; 
-    overflow-x: auto; /* Enable horizontal scrolling */
-    scroll-behavior: smooth;
-    scroll-snap-type: x mandatory; 
-    width: 100%; /* Use all container width */
-    scrollbar-width: none; /* Hides scrollbar */
-}
-
-#recommendationsView .carousel-item { /* Each card in the carousel */
-    flex: 0 0 auto; /* All cards have the same base size and don't shrink or grow */
-    width: 300px; 
-    height: 150px;
-    scroll-snap-align: center; /* Each card will snap to the center when scrolling */
-    transform: scale(0.7); /* Makes disabled cards look faded */
-    opacity: 0.4; /* Makes disabled cards look faded */
-    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease;
-    background: rgba(45, 18, 80, 0.4);
-    border: 2px solid rgba(255, 20, 147, 0.3);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#recommendationsView .carousel-item.active {
-    /* Active card gets enlarged and highlighted */
-    transform: scale(1.1); 
-    opacity: 1;
-    border: 2px solid #ff1493;
-    box-shadow: 0 0 40px rgba(255, 20, 147, 0.4);
-    background: rgba(45, 18, 80, 0.8);
-    z-index: 10;
-}
-
-#recommendationsView .movie-title {
-    font-family: var(--font-display);
-    /* Fixed font size - scaling will adjust the size accordingly */
-    font-size: 1.5rem; 
-    color: white;
-    text-align: center;
-    pointer-events: none;
-}
-
-#recommendationsView .carousel-item.active .movie-title {
-    font-size: 1.8rem; /* Large for the central card */
-}
-
-/* Navigation arrows */
-.carousel-arrow {
-    background: none;
-    border: none;
-    color: #ff1493;
-    font-size: 3rem;
-    cursor: pointer;
-}
-
-/* ========================================= */
-/* Z-INDEX & POINTER EVENTS FIX (ULTIMATE)   */
+/* RESPONSIVE                                */
 /* ========================================= */
 
-/* 1. Κάνουμε τα μεγάλα "περιτυλίγματα" εντελώς διάφανα στα κλικ */
-.global-header,
-#homeView .header,
-.global-header .header-left {
-    pointer-events: none !important;
+/* For screens smaller than 1024px (tablets) */
+@media (max-width: 1024px) {
+    .movies-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns in tablets */
+    }
 }
 
-/* 2. Επαναφέρουμε το μενού στη σωστή του μορφή χωρίς να απλώνεται δεξιά */
-.global-header .header-left {
-    display: flex !important;
-    width: fit-content !important;
+/* For screens smaller than 768px (tablets) */
+@media (max-width: 768px) {
+    .logo {
+        font-size: 14px;
+    }
+
+    .search-container {
+        max-width: 320px;
+    }
+
+    .movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .section-title {
+        font-size: 20px;
+    }
 }
 
-/* 3. Ενεργοποιούμε τα κλικ ΑΥΣΤΗΡΑ ΚΑΙ ΜΟΝΟ στα στοιχεία που πρέπει να πατιούνται */
-.menu-btn, 
-.logo, 
-.search-container, 
-.search-input, 
-.search-btn {
-    pointer-events: auto !important;
+/* For screens smaller than 600px (mobile phones) */
+@media (max-width: 600px) {
+    .movies-grid {
+        grid-template-columns: 1fr; /* 1 column in mobile phones */
+    }
+
+    .movie-detail {
+        grid-template-columns: 1fr;
+    }
+
+    .movie-detail__left {
+        padding: 140px 24px 110px;
+    }
+
+    .movie-detail__right {
+        padding: 24px;
+    }
+
+    .movie-title {
+        font-size: 52px;
+    }
+
+    .back-button {
+        left: 24px;
+        bottom: 24px;
+    }
+
+    #recommendationsView .carousel-container {
+        gap: 16px;
+    }
+
+    #recommendationsView .carousel-item {
+        width: 240px;
+    }
 }
 
-/* 4. Φροντίζουμε η αναζήτηση να είναι στο απόλυτα υψηλότερο επίπεδο */
-.search-container {
-    position: relative;
-    z-index: 1200 !important;
-}
+/* For screens smaller than 480px (mobile phones) */
+@media (max-width: 480px) {
+    .container {
+        padding: 0 10px;
+    }
 
-/* 5. Και το λογότυπο/μενού στο αμέσως επόμενο ασφαλές επίπεδο */
-.menu-btn, .logo {
-    position: relative;
-    z-index: 1100 !important;
-}
+    .logo {
+        font-size: 10px;
+    }
 
+    .search-container {
+        max-width: 100%;
+    }
+
+    .search-input {
+        padding: 10px 40px 10px 16px;
+        font-size: 13px;
+    }
+
+    .movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+    }
+
+    .movie-card {
+        padding: 15px;
+    }
+
+    .section-title {
+        font-size: 18px;
+    }
+
+    .movie-title {
+        font-size: 42px;
+    }
+
+    #recommendationsView .carousel-item {
+        width: 210px;
+        height: 135px;
+    }
+
+    .carousel-arrow {
+        font-size: 2.4rem;
+    }
+}
