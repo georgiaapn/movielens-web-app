@@ -39,29 +39,34 @@ const Model = {
         }));
     },
 
+    // When we get a new list of movies (either from the initial load or from a search),
+    //  we update both allMovies and filteredMovies in the state.
     setMovies(movies) {
         this.state.allMovies = movies;
         this.state.filteredMovies = [...movies]; // new array reference, with the same content as allMovies
         this.state.currentPage = 1; // reset to first page on new search
     },
 
+    // When a new movie is added, we want to update the allMovies list and filteredMovies (which is what the UI renders)
     addMovie(movie) {
         this.state.allMovies.unshift(movie); // add the new movie to the beginning of the allMovies array
         this.state.filteredMovies = [...this.state.allMovies]; // update filteredMovies to include the new movie
     },
 
+    // When we receive new recommendations from the backend, we update the recommendedMovies list in the state
     setRecommendations(recommendations) {
         this.state.recommendedMovies = recommendations;
         this.state.activeRecIndex = 0; // reset active carousel item to the first recommendation
         this.state.recommendationCards = []; // clear old prepared card data before rebuilding the carousel
     },
 
+    // After we fetch the average ratings for the recommended movies, we prepare the card data
     setRecommendationCards(cards) {
         this.state.recommendationCards = cards; // store the ready recommendation card objects used by the carousel view
     },
 
     // This function tries to find the movie in allMovies first, and if not found, it looks in recommendedMovies.
-    // returns the movie object if found which is in the format { movieId, title, genres }, or null if not found in either list.
+    // returns the movie object if found which is in the format { movieId, title, genres }, or null if not found 
     getMovieById(movieId) {
         return this.state.allMovies.find((movie) => movie.movieId === movieId)
             || this.state.recommendedMovies.find((movie) => movie.movieId === movieId)
@@ -93,7 +98,7 @@ const Model = {
     },
 
     getCurrentRating() {
-        return this.state.currentRating;
+        return this.state.currentRating; // retrieve the current selected rating in the details view
     },
 
     setActiveRecIndex(index) {
@@ -226,6 +231,7 @@ const View = {
         toastMessage: document.getElementById('toastMessage')
     },
 
+    // This function creates the HTML for the star rating display based on the average rating value.
     createStarRating(rating) {
         let stars = '';
         const numRating = parseFloat(rating); // Convert to number in case it's a string
@@ -262,6 +268,8 @@ const View = {
         this.elements.detailGenres.textContent = formattedGenres; // fills the details placeholders with the selected movie information
     },
 
+    // When we render the movies grid, we first clear any existing content, then we create a card for each movie
+    //  in the provided list and append it to the grid.
     renderMoviesSkeleton(movies) {
         this.elements.moviesGrid.innerHTML = '';
 
@@ -288,6 +296,7 @@ const View = {
         });
     },
 
+    // After the previous function, we call this function to update the rating display on the movie card.
     updateMovieCardRating(movieId, avgRating, ratingValue) {
         // Update rating text
         // getElementById: finds the element with id rating-{movieId} and updates its text content to the average rating
@@ -657,6 +666,7 @@ const Controller = {
         }
     },
 
+    // This function sets up an event listener on the search input field. It uses a debounce mechanism 
     bindSearchInput() {
         let timeout = null;
 
@@ -672,6 +682,9 @@ const Controller = {
         });
     },
 
+    // This function sets up the interactive behavior for the star rating system in the movie details view.
+    //  It allows users to hover over the stars to preview their rating and click to select it.
+    //  It also resets the preview when the mouse leaves the star area.
     bindDetailStars() {
         View.elements.detailStars.forEach((star, index) => {
             // if cursor offset is less than half the star's width => 
@@ -728,6 +741,7 @@ const Controller = {
         });
     },
 
+    // This function sets up all the event listeners for the application.
     bindEvents() {
         View.elements.detailRateBtn.addEventListener('click', () => this.submitDetailRating());
         View.elements.addMovieBtn.addEventListener('click', () => this.openAddMovieModal()); // Open modal when clicking "Add a movie" button
