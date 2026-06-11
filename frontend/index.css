@@ -232,6 +232,7 @@ body {
 
 .star.half {
     background: linear-gradient(to right, var(--color-accent) 50%, #d8d8d8 50%); /* Half the star is gray and the other half is pink */
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     /* The outline is automatically retained from the .star class */
