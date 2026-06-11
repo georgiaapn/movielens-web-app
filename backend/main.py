@@ -1,3 +1,5 @@
+import re
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from .database import get_db_connection
@@ -98,12 +100,19 @@ def get_movie_ratings(movieId: int):
         # Ensures that the database connection is closed regardless of whether an error occurred or not
         conn.close()
 
+# Needed for endpoint 3 
+def canonicalize_movie_title(title: str) -> str:
+    normalized = title.strip().lower() # remove leading/trailing whitespace and convert to lowercase
+    return re.sub(r"\s*\(\d{4}\)$", "", normalized)  # remove trailing year in parentheses, e.g., "Toy Story (1995)" -> "toy story"
+
 # Endpoint 3: Add a New Movie
 @app.post("/movielens/api/movies" , response_model=MovieAddResponse)
 def add_movie(movie: MovieCreate):
+    normalized_title = movie.title.strip() if movie.title else "" # remove leading and trailing whitespace
+    canonical_title = canonicalize_movie_title(normalized_title) if normalized_title else ""
 
     # 1. If title is empty, return 400 Bad Request
-    if not movie.title or len(movie.title.strip()) == 0:
+    if not movie.title or len(normalized_title) == 0:
         raise HTTPException(
             status_code=400, 
             detail={"status": "fail", "message": "Movie title cannot be empty."}
@@ -119,16 +128,37 @@ def add_movie(movie: MovieCreate):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Find the next available ID (larger than the maximum existing movieId, to ensure AUTO_INCREMENT)
-    cursor.execute("SELECT MAX(movieId) FROM movies")
-    max_id = cursor.fetchone()[0] or 0
-    new_id = max_id + 1 # ensure unique movieId for our new movie
-
     try:
+        cursor.execute("SELECT movieId, title FROM movies")
+        existing_movie = next(
+            (
+                row for row in cursor.fetchall()
+                if canonicalize_movie_title(row["title"]) == canonical_title
+            ),
+            None
+        )
+        if existing_movie:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "status": "fail",
+                    "message": f'Movie "{existing_movie["title"]}" already exists.'
+                }
+            )
+
+        # Find the next available ID (larger than the maximum existing movieId, to ensure AUTO_INCREMENT)
+        cursor.execute("SELECT MAX(movieId) FROM movies")
+        max_id = cursor.fetchone()[0] or 0
+        new_id = max_id + 1 # ensure unique movieId for our new movie
+
         query = "INSERT INTO movies (movieId, title, genres) VALUES (?, ?, ?)"
-        cursor.execute(query, (new_id, movie.title, movie.genres))
+        cursor.execute(query, (new_id, normalized_title, movie.genres))
         conn.commit() # commit the transaction to save changes to the database
         return {"status": "success", "movieId": new_id}
+    except HTTPException:
+        # if this didn't exist, our previously thrown 400/409 error would be caught by the generic 
+        # Exception handler below, and we would end up returning a 500 Internal Server Error 
+        raise # We re-raise the HTTPException to continue as a 400/409 error
     except Exception:
         conn.rollback() # If an error occurs, we undo any changes that were made to the database during this transaction
         raise HTTPException(
