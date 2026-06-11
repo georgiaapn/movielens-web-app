@@ -171,7 +171,7 @@ def add_movie(movie: MovieCreate):
 # Endpoint 4: Get Recommendations
 @app.post("/movielens/api/recommendations", response_model=RecommendationResponse)
 def get_movie_recommendations(request: RecommendationRequest):
-    # 1. Έλεγχος (400 Bad Request): Αν η λίστα με τις βαθμολογίες είναι άδεια
+    # If no ratings are provided, return 400 Bad Request
     if not request.ratings or len(request.ratings) == 0:
         raise HTTPException(
             status_code=400,
