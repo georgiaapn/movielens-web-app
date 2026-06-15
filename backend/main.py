@@ -101,19 +101,14 @@ def get_movie_ratings(movieId: int):
         # Ensures that the database connection is closed regardless of whether an error occurred or not
         conn.close()
 
-# Needed for endpoint 3 
-def canonicalize_movie_title(title: str) -> str:
-    normalized = title.strip().lower() # remove leading/trailing whitespace and convert to lowercase
-    return re.sub(r"\s*\(\d{4}\)$", "", normalized)  # remove trailing year in parentheses, e.g., "Toy Story (1995)" -> "toy story"
-
 # Endpoint 3: Add a New Movie
 @app.post("/movielens/api/movies" , response_model=MovieAddResponse)
 def add_movie(movie: MovieCreate):
-    normalized_title = movie.title.strip() if movie.title else "" # remove leading and trailing whitespace
-    canonical_title = canonicalize_movie_title(normalized_title) if normalized_title else ""
+    stored_title = movie.title.strip() if movie.title else "" # remove leading and trailing whitespace
+    normalized_title = stored_title.lower() if stored_title else ""
 
     # 1. If title is empty, return 400 Bad Request
-    if not movie.title or len(normalized_title) == 0:
+    if not movie.title or len(stored_title) == 0:
         raise HTTPException(
             status_code=400, 
             detail={"status": "fail", "message": "Movie title cannot be empty."}
@@ -134,7 +129,7 @@ def add_movie(movie: MovieCreate):
         existing_movie = next(
             (
                 row for row in cursor.fetchall()
-                if canonicalize_movie_title(row["title"]) == canonical_title
+                if row["title"].strip().lower() == normalized_title
             ),
             None
         )
@@ -153,7 +148,7 @@ def add_movie(movie: MovieCreate):
         new_id = max_id + 1 # ensure unique movieId for our new movie
 
         query = "INSERT INTO movies (movieId, title, genres) VALUES (?, ?, ?)"
-        cursor.execute(query, (new_id, normalized_title, movie.genres))
+        cursor.execute(query, (new_id, stored_title, movie.genres))
         conn.commit() # commit the transaction to save changes to the database
         return {"status": "success", "movieId": new_id}
     except HTTPException:
