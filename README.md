@@ -1,4 +1,4 @@
-# MovieLens Web App
+# MovieLens Web App 🚀 **[Try the Live App Here](https://movielens-web-app.vercel.app)**
 
 A full-stack movie recommendation web application built with **FastAPI**, **SQLite**, and **vanilla JavaScript**.
 
@@ -84,6 +84,7 @@ frontend/
 backend/
   main.py
   models.py
+
   database.py
   init_db.py
   recommender.py
@@ -97,3 +98,15 @@ backend/
 - The backend must be running before the frontend can fetch data.
 - Frontend ratings are session-based and are not persisted to the database.
 - The assignment-specific backend run instructions are also available in `backend/README.md`.
+
+## App Preview
+
+### Home Page
+
+![Search and Movie List](https://github.com/user-attachments/assets/c6c3c892-ea1d-4609-8c93-bcdb0d8b8525)
+
+### Recommendations
+![Recommendations Feature](https://github.com/user-attachments/assets/88a28b1e-773a-435b-b8d9-a3035ee6dd9d)
+
+### Selected Movie
+![Movie Card](https://github.com/user-attachments/assets/77336002-708c-4e66-be41-d9db31d2590a)
