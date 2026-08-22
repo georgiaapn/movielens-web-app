@@ -21,6 +21,7 @@ app.add_middleware(
     allow_origins=[
         "http://127.0.0.1:5500", # frontend server address
         "http://localhost:5500",
+        "https://movielens-web-app.vercel.app/, # vercel deployment
         "null", # pages opened directly from file:// usually send Origin: null
     ],
     # browser won't allow credentials (cookies, auth headers, sessionIDs) to be sent in cross-origin requests by default,
