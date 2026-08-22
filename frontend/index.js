@@ -4,7 +4,7 @@
 
 const Model = {
     config: {
-        apiBaseUrl: "https://movielens-api.onrender.com/movielens/api",
+        apiBaseUrl: "https://movielens-web-app.onrender.com/movielens/api",
         moviesPerPage: 12
     },
 
