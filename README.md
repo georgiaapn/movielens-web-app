@@ -64,7 +64,7 @@ python -m http.server 5500 --directory frontend
 ```
 
 Frontend URL:
-[http://127.0.0.1:5500/frontend/](http://127.0.0.1:5500/frontend)
+[http://127.0.0.1:5500/](http://127.0.0.1:5500/)
 
 ## How It Works
 

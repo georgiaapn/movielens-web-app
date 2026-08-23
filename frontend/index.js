@@ -2,9 +2,19 @@
 // MODEL
 // ==========================================
 
+const API_BASE_URL = (() => {
+    const localBackendUrl = "http://127.0.0.1:3000/movielens/api";
+    const renderBackendUrl = "https://movielens-web-app.onrender.com/movielens/api";
+    const isLocalFrontend = ["localhost", "127.0.0.1", ""].includes(window.location.hostname);
+
+    return isLocalFrontend || window.location.protocol === "file:"
+        ? localBackendUrl
+        : renderBackendUrl;
+})();
+
 const Model = {
     config: {
-        apiBaseUrl: "https://movielens-web-app.onrender.com/movielens/api",
+        apiBaseUrl: API_BASE_URL,
         moviesPerPage: 12
     },
 
